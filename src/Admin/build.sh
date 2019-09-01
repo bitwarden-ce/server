@@ -16,7 +16,7 @@ echo "Node Build"
 cd $DIR
 npm install
 cd $CUR_DIR
-gulp --gulpfile $DIR/gulpfile.js build
+npx -p gulp-cli gulp --gulpfile $DIR/gulpfile.js build
 echo "Publish"
 dotnet publish $DIR/Admin.csproj -c "Release" -o $DIR/obj/Docker/publish
 

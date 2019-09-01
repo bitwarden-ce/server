@@ -3,11 +3,7 @@
 const gulp = require('gulp'),
     rimraf = require('rimraf'),
     merge = require('merge-stream'),
-    runSequence = require('run-sequence'),
     googleWebFonts = require('gulp-google-webfonts'),
-    concat = require('gulp-concat'),
-    cssmin = require('gulp-cssmin'),
-    uglify = require('gulp-uglify'),
     sass = require('gulp-sass');
 
 const paths = {};
@@ -25,21 +21,13 @@ paths.minJs = paths.jsDir + '**/*.min.js';
 paths.libJs = paths.libDir + '**/*.js';
 paths.libMinJs = paths.libDir + '**/*.min.js';
 
-gulp.task('clean:js', (cb) => {
-    rimraf(paths.minJs, cb);
-});
+const cleaner = path => (cb) => rimraf(path, cb);
 
-gulp.task('clean:css', (cb) => {
-    rimraf(paths.cssDir, cb);
-});
+const clean_js = cleaner(paths.minJs);
+const clean_css = cleaner(paths.cssDir);
+const clean_lib = cleaner(paths.libDir);
 
-gulp.task('clean:lib', (cb) => {
-    rimraf(paths.libDir, cb);
-});
-
-gulp.task('clean', ['clean:js', 'clean:css', 'clean:lib']);
-
-gulp.task('lib', ['clean:lib'], () => {
+const build_lib = gulp.series(clean_lib, () => {
     const libs = [
         {
             src: paths.npmDir + 'bootstrap/dist/js/*',
@@ -69,25 +57,20 @@ gulp.task('lib', ['clean:lib'], () => {
     return merge(tasks);
 });
 
-gulp.task('sass', () => {
+const build_sass = () => {
     return gulp.src(paths.sass)
         .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
         .pipe(gulp.dest(paths.cssDir));
-});
+};
 
-gulp.task('sass:watch', () => {
-    gulp.watch(paths.sass, ['sass']);
-});
-
-gulp.task('webfonts', () => {
+const build_webfonts = () => {
     return gulp.src('./webfonts.list')
         .pipe(googleWebFonts({
             fontsDir: 'webfonts',
             cssFilename: 'webfonts.css'
         }))
         .pipe(gulp.dest(paths.cssDir));
-});
+};
 
-gulp.task('build', function (cb) {
-    return runSequence('clean', ['lib', 'sass', 'webfonts'], cb);
-});
+exports.clean = gulp.parallel(clean_js, clean_css, clean_lib);
+exports.build = gulp.parallel(build_lib, build_sass, build_webfonts);
