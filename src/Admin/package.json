@@ -1,7 +1,11 @@
 {
   "name": "bitwarden",
   "version": "0.0.0",
+  "scripts": {
+    "build": "gulp build"
+  },
   "devDependencies": {
+    "gulp-cli": "^2.2.0",
     "gulp": "4.0.2",
     "rimraf": "3.0.0",
     "merge-stream": "2.0.0",

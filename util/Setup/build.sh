@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
+cd $DIR
 
 echo -e "\n## Building Setup"
 

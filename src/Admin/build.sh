@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-CUR_DIR="$(pwd)"
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
+cd $DIR
 
 echo -e "\n## Building Admin"
 
@@ -13,10 +13,8 @@ dotnet restore $DIR/Admin.csproj
 echo "Clean"
 dotnet clean $DIR/Admin.csproj -c "Release" -o $DIR/obj/Docker/publish
 echo "Node Build"
-cd $DIR
-npm install
-cd $CUR_DIR
-npx -p gulp-cli gulp --gulpfile $DIR/gulpfile.js build
+yarn
+yarn build
 echo "Publish"
 dotnet publish $DIR/Admin.csproj -c "Release" -o $DIR/obj/Docker/publish
 
