@@ -13,20 +13,17 @@ namespace Bit.Core.Services
     {
         private readonly IEventWriteService _eventWriteService;
         private readonly IOrganizationUserRepository _organizationUserRepository;
-        private readonly IApplicationCacheService _applicationCacheService;
         private readonly CurrentContext _currentContext;
         private readonly GlobalSettings _globalSettings;
 
         public EventService(
             IEventWriteService eventWriteService,
             IOrganizationUserRepository organizationUserRepository,
-            IApplicationCacheService applicationCacheService,
             CurrentContext currentContext,
             GlobalSettings globalSettings)
         {
             _eventWriteService = eventWriteService;
             _organizationUserRepository = organizationUserRepository;
-            _applicationCacheService = applicationCacheService;
             _currentContext = currentContext;
             _globalSettings = globalSettings;
         }
@@ -44,9 +41,8 @@ namespace Bit.Core.Services
                 }
             };
 
-            var orgAbilities = await _applicationCacheService.GetOrganizationAbilitiesAsync();
             var orgs = await _currentContext.OrganizationMembershipAsync(_organizationUserRepository, userId);
-            var orgEvents = orgs.Where(o => CanUseEvents(orgAbilities, o.Id))
+            var orgEvents = orgs
                 .Select(o => new EventMessage(_currentContext)
                 {
                     OrganizationId = o.Id,
@@ -69,7 +65,7 @@ namespace Bit.Core.Services
 
         public async Task LogCipherEventAsync(Cipher cipher, EventType type, DateTime? date = null)
         {
-            var e = await BuildCipherEventMessageAsync(cipher, type, date);
+            var e = BuildCipherEventMessageAsync(cipher, type, date);
             if(e != null)
             {
                 await _eventWriteService.CreateAsync(e);
@@ -81,7 +77,7 @@ namespace Bit.Core.Services
             var cipherEvents = new List<IEvent>();
             foreach(var ev in events)
             {
-                var e = await BuildCipherEventMessageAsync(ev.Item1, ev.Item2, ev.Item3);
+                var e = BuildCipherEventMessageAsync(ev.Item1, ev.Item2, ev.Item3);
                 if(e != null)
                 {
                     cipherEvents.Add(e);
@@ -90,21 +86,12 @@ namespace Bit.Core.Services
             await _eventWriteService.CreateManyAsync(cipherEvents);
         }
 
-        private async Task<EventMessage> BuildCipherEventMessageAsync(Cipher cipher, EventType type, DateTime? date = null)
+        private EventMessage BuildCipherEventMessageAsync(Cipher cipher, EventType type, DateTime? date = null)
         {
             // Only logging organization cipher events for now.
             if(!cipher.OrganizationId.HasValue || (!_currentContext?.UserId.HasValue ?? true))
             {
                 return null;
-            }
-
-            if(cipher.OrganizationId.HasValue)
-            {
-                var orgAbilities = await _applicationCacheService.GetOrganizationAbilitiesAsync();
-                if(!CanUseEvents(orgAbilities, cipher.OrganizationId.Value))
-                {
-                    return null;
-                }
             }
 
             return new EventMessage(_currentContext)
@@ -120,12 +107,6 @@ namespace Bit.Core.Services
 
         public async Task LogCollectionEventAsync(Collection collection, EventType type, DateTime? date = null)
         {
-            var orgAbilities = await _applicationCacheService.GetOrganizationAbilitiesAsync();
-            if(!CanUseEvents(orgAbilities, collection.OrganizationId))
-            {
-                return;
-            }
-
             var e = new EventMessage(_currentContext)
             {
                 OrganizationId = collection.OrganizationId,
@@ -139,11 +120,6 @@ namespace Bit.Core.Services
 
         public async Task LogGroupEventAsync(Group group, EventType type, DateTime? date = null)
         {
-            var orgAbilities = await _applicationCacheService.GetOrganizationAbilitiesAsync();
-            if(!CanUseEvents(orgAbilities, group.OrganizationId))
-            {
-                return;
-            }
 
             var e = new EventMessage(_currentContext)
             {
@@ -159,11 +135,6 @@ namespace Bit.Core.Services
         public async Task LogOrganizationUserEventAsync(OrganizationUser organizationUser, EventType type,
             DateTime? date = null)
         {
-            var orgAbilities = await _applicationCacheService.GetOrganizationAbilitiesAsync();
-            if(!CanUseEvents(orgAbilities, organizationUser.OrganizationId))
-            {
-                return;
-            }
 
             var e = new EventMessage(_currentContext)
             {
@@ -179,11 +150,6 @@ namespace Bit.Core.Services
 
         public async Task LogOrganizationEventAsync(Organization organization, EventType type, DateTime? date = null)
         {
-            if(!organization.Enabled || !organization.UseEvents)
-            {
-                return;
-            }
-
             var e = new EventMessage(_currentContext)
             {
                 OrganizationId = organization.Id,
@@ -192,12 +158,6 @@ namespace Bit.Core.Services
                 Date = date.GetValueOrDefault(DateTime.UtcNow)
             };
             await _eventWriteService.CreateAsync(e);
-        }
-
-        private bool CanUseEvents(IDictionary<Guid, OrganizationAbility> orgAbilities, Guid orgId)
-        {
-            return orgAbilities != null && orgAbilities.ContainsKey(orgId) &&
-                orgAbilities[orgId].Enabled && orgAbilities[orgId].UseEvents;
         }
     }
 }

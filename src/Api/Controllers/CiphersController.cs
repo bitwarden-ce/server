@@ -65,7 +65,7 @@ namespace Bit.Api.Controllers
                 throw new NotFoundException();
             }
 
-            return new CipherMiniResponseModel(cipher, _globalSettings, cipher.OrganizationUseTotp);
+            return new CipherMiniResponseModel(cipher, _globalSettings);
         }
 
         [HttpGet("{id}/full-details")]
@@ -145,7 +145,7 @@ namespace Bit.Api.Controllers
             var userId = _userService.GetProperUserId(User).Value;
             await _cipherService.SaveAsync(cipher, userId, model.CollectionIds, true, false);
 
-            var response = new CipherMiniResponseModel(cipher, _globalSettings, false);
+            var response = new CipherMiniResponseModel(cipher, _globalSettings);
             return response;
         }
 
@@ -190,7 +190,7 @@ namespace Bit.Api.Controllers
             var cipherClone = CoreHelpers.CloneObject(model.ToCipher(cipher));
             await _cipherService.SaveAsync(cipherClone, userId, null, true, false);
 
-            var response = new CipherMiniResponseModel(cipherClone, _globalSettings, cipher.OrganizationUseTotp);
+            var response = new CipherMiniResponseModel(cipherClone, _globalSettings);
             return response;
         }
 
@@ -218,9 +218,8 @@ namespace Bit.Api.Controllers
         [HttpPost("import")]
         public async Task PostImport([FromBody]ImportCiphersRequestModel model)
         {
-            if(!_globalSettings.SelfHosted &&
-                (model.Ciphers.Count() > 6000 || model.FolderRelationships.Count() > 6000 ||
-                    model.Folders.Count() > 1000))
+            if(model.Ciphers.Count() > 6000 || model.FolderRelationships.Count() > 6000 ||
+               model.Folders.Count() > 1000)
             {
                 throw new BadRequestException("You cannot import this much data at once.");
             }
@@ -235,9 +234,8 @@ namespace Bit.Api.Controllers
         public async Task PostImport([FromQuery]string organizationId,
             [FromBody]ImportOrganizationCiphersRequestModel model)
         {
-            if(!_globalSettings.SelfHosted &&
-                (model.Ciphers.Count() > 6000 || model.CollectionRelationships.Count() > 12000 ||
-                    model.Collections.Count() > 1000))
+            if(model.Ciphers.Count() > 6000 || model.CollectionRelationships.Count() > 12000 ||
+               model.Collections.Count() > 1000)
             {
                 throw new BadRequestException("You cannot import this much data at once.");
             }
@@ -350,7 +348,7 @@ namespace Bit.Api.Controllers
         [HttpPost("delete")]
         public async Task DeleteMany([FromBody]CipherBulkDeleteRequestModel model)
         {
-            if(!_globalSettings.SelfHosted && model.Ids.Count() > 500)
+            if(model.Ids.Count() > 500)
             {
                 throw new BadRequestException("You can only delete up to 500 items at a time. " +
                     "Consider using the \"Purge Vault\" option instead.");
@@ -364,7 +362,7 @@ namespace Bit.Api.Controllers
         [HttpPost("move")]
         public async Task MoveMany([FromBody]CipherBulkMoveRequestModel model)
         {
-            if(!_globalSettings.SelfHosted && model.Ids.Count() > 500)
+            if(model.Ids.Count() > 500)
             {
                 throw new BadRequestException("You can only move up to 500 items at a time.");
             }
@@ -480,7 +478,7 @@ namespace Bit.Api.Controllers
                         Request.ContentLength.GetValueOrDefault(0), userId, true);
             });
 
-            return new CipherMiniResponseModel(cipher, _globalSettings, cipher.OrganizationUseTotp);
+            return new CipherMiniResponseModel(cipher, _globalSettings);
         }
 
         [HttpPost("{id}/attachment/{attachmentId}/share")]

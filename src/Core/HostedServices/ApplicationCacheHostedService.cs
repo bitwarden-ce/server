@@ -14,7 +14,6 @@ namespace Bit.Core.HostedServices
 {
     public class ApplicationCacheHostedService : IHostedService, IDisposable
     {
-        private readonly InMemoryServiceBusApplicationCacheService _applicationCacheService;
         private readonly IOrganizationRepository _organizationRepository;
         protected readonly ILogger<ApplicationCacheHostedService> _logger;
         private readonly SubscriptionClient _subscriptionClient;
@@ -23,14 +22,12 @@ namespace Bit.Core.HostedServices
         private readonly string _topicName;
 
         public ApplicationCacheHostedService(
-            IApplicationCacheService applicationCacheService,
             IOrganizationRepository organizationRepository,
             ILogger<ApplicationCacheHostedService> logger,
             GlobalSettings globalSettings)
         {
             _topicName = globalSettings.ServiceBus.ApplicationCacheTopicName;
             _subName = CoreHelpers.GetApplicationCacheServiceBusSubcriptionName(globalSettings);
-            _applicationCacheService = applicationCacheService as InMemoryServiceBusApplicationCacheService;
             _organizationRepository = organizationRepository;
             _logger = logger;
             _managementClient = new ManagementClient(globalSettings.ServiceBus.ConnectionString);
@@ -74,26 +71,6 @@ namespace Bit.Core.HostedServices
 
         private async Task ProcessMessageAsync(Message message, CancellationToken cancellationToken)
         {
-            if(message.Label != _subName && _applicationCacheService != null)
-            {
-                switch((ApplicationCacheMessageType)message.UserProperties["type"])
-                {
-                    case ApplicationCacheMessageType.UpsertOrganizationAbility:
-                        var upsertedOrgId = (Guid)message.UserProperties["id"];
-                        var upsertedOrg = await _organizationRepository.GetByIdAsync(upsertedOrgId);
-                        if(upsertedOrg != null)
-                        {
-                            await _applicationCacheService.BaseUpsertOrganizationAbilityAsync(upsertedOrg);
-                        }
-                        break;
-                    case ApplicationCacheMessageType.DeleteOrganizationAbility:
-                        await _applicationCacheService.BaseDeleteOrganizationAbilityAsync(
-                            (Guid)message.UserProperties["id"]);
-                        break;
-                    default:
-                        break;
-                }
-            }
             if(!cancellationToken.IsCancellationRequested)
             {
                 await _subscriptionClient.CompleteAsync(message.SystemProperties.LockToken);

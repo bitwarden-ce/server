@@ -69,8 +69,7 @@ namespace Bit.Api.Controllers
                 collectionCiphersGroupDict = collectionCiphers.GroupBy(c => c.CipherId).ToDictionary(s => s.Key);
             }
 
-            var userTwoFactorEnabled = await _userService.TwoFactorIsEnabledAsync(user);
-            var response = new SyncResponseModel(_globalSettings, user, userTwoFactorEnabled, organizationUserDetails,
+            var response = new SyncResponseModel(_globalSettings, user, organizationUserDetails,
                 folders, collections, ciphers, collectionCiphersGroupDict, excludeDomains);
             return response;
         }

@@ -1,5 +1,4 @@
 ﻿using Bit.Core.Enums;
-using Bit.Core.Models.StaticStore;
 using System.Collections.Generic;
 
 namespace Bit.Core.Utilities
@@ -88,121 +87,8 @@ namespace Bit.Core.Utilities
             GlobalDomains.Add(GlobalEquivalentDomainsType.StackExchange, new List<string> { "stackexchange.com", "superuser.com", "stackoverflow.com", "serverfault.com", "mathoverflow.net", "askubuntu.com" });
 
             #endregion
-
-            #region Plans
-
-            Plans = new List<Plan>
-            {
-                new Plan
-                {
-                    Type = PlanType.Free,
-                    BaseSeats = 2,
-                    CanBuyAdditionalSeats = false,
-                    MaxCollections = 2,
-                    Name = "Free",
-                    UpgradeSortOrder = -1 // Always the lowest plan, cannot be upgraded to
-                },
-                new Plan
-                {
-                    Type = PlanType.FamiliesAnnually,
-                    BaseSeats = 5,
-                    BasePrice = 12,
-                    CanBuyAdditionalSeats = false,
-                    CanBuyPremiumAccessAddon = true,
-                    Name = "Families",
-                    StripePlanId = "personal-org-annually",
-                    StripeStoragePlanId = "storage-gb-annually",
-                    StripePremiumAccessPlanId = "personal-org-premium-access-annually",
-                    UpgradeSortOrder = 1,
-                    TrialPeriodDays = 7,
-                    UseTotp = true,
-                    MaxStorageGb = 1,
-                    SelfHost = true
-                },
-                new Plan
-                {
-                    Type = PlanType.TeamsMonthly,
-                    BaseSeats = 5,
-                    BasePrice = 8,
-                    SeatPrice = 2.5M,
-                    CanBuyAdditionalSeats = true,
-                    Name = "Teams (Monthly)",
-                    StripePlanId = "teams-org-monthly",
-                    StripeSeatPlanId = "teams-org-seat-monthly",
-                    StripeStoragePlanId = "storage-gb-monthly",
-                    UpgradeSortOrder = 2,
-                    TrialPeriodDays = 7,
-                    UseTotp = true,
-                    MaxStorageGb = 1
-                },
-                new Plan
-                {
-                    Type = PlanType.TeamsAnnually,
-                    BaseSeats = 5,
-                    BasePrice = 60,
-                    SeatPrice = 24,
-                    CanBuyAdditionalSeats = true,
-                    Name = "Teams (Annually)",
-                    StripePlanId = "teams-org-annually",
-                    StripeSeatPlanId = "teams-org-seat-annually",
-                    StripeStoragePlanId = "storage-gb-annually",
-                    UpgradeSortOrder = 2,
-                    TrialPeriodDays = 7,
-                    UseTotp = true,
-                    MaxStorageGb = 1
-                },
-                new Plan
-                {
-                    Type = PlanType.EnterpriseMonthly,
-                    BaseSeats = 0,
-                    BasePrice = 0,
-                    SeatPrice = 4M,
-                    CanBuyAdditionalSeats = true,
-                    Name = "Enterprise (Monthly)",
-                    StripePlanId = null,
-                    StripeSeatPlanId = "enterprise-org-seat-monthly",
-                    StripeStoragePlanId = "storage-gb-monthly",
-                    UpgradeSortOrder = 3,
-                    TrialPeriodDays = 7,
-                    UseGroups = true,
-                    UseDirectory = true,
-                    UseEvents = true,
-                    UseTotp = true,
-                    Use2fa = true,
-                    UseApi = true,
-                    MaxStorageGb = 1,
-                    SelfHost = true,
-                    UsersGetPremium = true
-                },
-                new Plan
-                {
-                    Type = PlanType.EnterpriseAnnually,
-                    BaseSeats = 0,
-                    BasePrice = 0,
-                    SeatPrice = 36,
-                    CanBuyAdditionalSeats = true,
-                    Name = "Enterprise (Annually)",
-                    StripePlanId = null,
-                    StripeSeatPlanId = "enterprise-org-seat-annually",
-                    StripeStoragePlanId = "storage-gb-annually",
-                    UpgradeSortOrder = 3,
-                    TrialPeriodDays = 7,
-                    UseGroups = true,
-                    UseDirectory = true,
-                    UseEvents = true,
-                    UseTotp = true,
-                    Use2fa = true,
-                    UseApi = true,
-                    MaxStorageGb = 1,
-                    SelfHost = true,
-                    UsersGetPremium = true
-                }
-            };
-
-            #endregion
         }
 
         public static IDictionary<GlobalEquivalentDomainsType, IEnumerable<string>> GlobalDomains { get; set; }
-        public static IEnumerable<Plan> Plans { get; set; }
     }
 }

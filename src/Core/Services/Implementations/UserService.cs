@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
@@ -16,18 +16,13 @@ using U2F.Core.Models;
 using U2F.Core.Utils;
 using Bit.Core.Exceptions;
 using Bit.Core.Utilities;
-using System.IO;
-using Newtonsoft.Json;
 using Microsoft.AspNetCore.DataProtection;
 using U2F.Core.Exceptions;
 
 namespace Bit.Core.Services
 {
-    public class UserService : UserManager<User>, IUserService, IDisposable
+    public class UserService : UserManager<User>, IUserService
     {
-        private const string PremiumPlanId = "premium-annually";
-        private const string StoragePlanId = "storage-gb-annually";
-
         private readonly IUserRepository _userRepository;
         private readonly ICipherRepository _cipherRepository;
         private readonly IOrganizationUserRepository _organizationUserRepository;
@@ -39,10 +34,7 @@ namespace Bit.Core.Services
         private readonly IdentityOptions _identityOptions;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IEnumerable<IPasswordValidator<User>> _passwordValidators;
-        private readonly ILicensingService _licenseService;
         private readonly IEventService _eventService;
-        private readonly IApplicationCacheService _applicationCacheService;
-        private readonly IPaymentService _paymentService;
         private readonly IDataProtector _organizationServiceDataProtector;
         private readonly CurrentContext _currentContext;
         private readonly GlobalSettings _globalSettings;
@@ -64,11 +56,8 @@ namespace Bit.Core.Services
             IdentityErrorDescriber errors,
             IServiceProvider services,
             ILogger<UserManager<User>> logger,
-            ILicensingService licenseService,
             IEventService eventService,
-            IApplicationCacheService applicationCacheService,
             IDataProtectionProvider dataProtectionProvider,
-            IPaymentService paymentService,
             CurrentContext currentContext,
             GlobalSettings globalSettings)
             : base(
@@ -93,10 +82,7 @@ namespace Bit.Core.Services
             _identityErrorDescriber = errors;
             _passwordHasher = passwordHasher;
             _passwordValidators = passwordValidators;
-            _licenseService = licenseService;
             _eventService = eventService;
-            _applicationCacheService = applicationCacheService;
-            _paymentService = paymentService;
             _organizationServiceDataProtector = dataProtectionProvider.CreateProtector(
                 "OrganizationServiceDataProtector");
             _currentContext = currentContext;
@@ -186,7 +172,7 @@ namespace Bit.Core.Services
                 if(orgs.Count == 1)
                 {
                     var org = await _organizationRepository.GetByIdAsync(orgs.First().OrganizationId);
-                    if(org != null && (!org.Enabled || string.IsNullOrWhiteSpace(org.GatewaySubscriptionId)))
+                    if(org != null)
                     {
                         var orgCount = await _organizationUserRepository.GetCountByOrganizationIdAsync(org.Id);
                         if(orgCount <= 1)
@@ -205,16 +191,7 @@ namespace Bit.Core.Services
                     });
                 }
             }
-
-            if(!string.IsNullOrWhiteSpace(user.GatewaySubscriptionId))
-            {
-                try
-                {
-                    await CancelPremiumAsync(user);
-                }
-                catch(GatewayException) { }
-            }
-
+            
             await _userRepository.DeleteAsync(user);
             await _pushService.PushLogOutAsync(user.Id);
             return IdentityResult.Success;
@@ -679,76 +656,12 @@ namespace Bit.Core.Services
             return true;
         }
 
-        public async Task<Tuple<bool, string>> SignUpPremiumAsync(User user, string paymentToken,
-            PaymentMethodType paymentMethodType, short additionalStorageGb, UserLicense license)
-        {
-            if(user.Premium)
-            {
-                throw new BadRequestException("Already a premium user.");
-            }
-
-            if(additionalStorageGb < 0)
-            {
-                throw new BadRequestException("You can't subtract storage!");
-            }
-
             if((paymentMethodType == PaymentMethodType.GoogleInApp ||
                 paymentMethodType == PaymentMethodType.AppleInApp) && additionalStorageGb > 0)
             {
                 throw new BadRequestException("You cannot add storage with this payment method.");
             }
 
-            string paymentIntentClientSecret = null;
-            IPaymentService paymentService = null;
-            if(_globalSettings.SelfHosted)
-            {
-                if(license == null || !_licenseService.VerifyLicense(license))
-                {
-                    throw new BadRequestException("Invalid license.");
-                }
-
-                if(!license.CanUse(user))
-                {
-                    throw new BadRequestException("This license is not valid for this user.");
-                }
-
-                var dir = $"{_globalSettings.LicenseDirectory}/user";
-                Directory.CreateDirectory(dir);
-                File.WriteAllText($"{dir}/{user.Id}.json", JsonConvert.SerializeObject(license, Formatting.Indented));
-            }
-            else
-            {
-                paymentIntentClientSecret = await _paymentService.PurchasePremiumAsync(user, paymentMethodType,
-                    paymentToken, additionalStorageGb);
-            }
-
-            user.Premium = true;
-            user.RevisionDate = DateTime.UtcNow;
-
-            if(_globalSettings.SelfHosted)
-            {
-                user.MaxStorageGb = 10240; // 10 TB
-                user.LicenseKey = license.LicenseKey;
-                user.PremiumExpirationDate = license.Expires;
-            }
-            else
-            {
-                user.MaxStorageGb = (short)(1 + additionalStorageGb);
-                user.LicenseKey = CoreHelpers.SecureRandomString(20);
-            }
-
-            try
-            {
-                await SaveUserAsync(user);
-                await _pushService.PushSyncVaultAsync(user.Id);
-            }
-            catch when(!_globalSettings.SelfHosted)
-            {
-                await paymentService.CancelAndRecoverChargesAsync(user);
-                throw;
-            }
-            return new Tuple<bool, string>(string.IsNullOrWhiteSpace(paymentIntentClientSecret),
-                paymentIntentClientSecret);
         }
 
         public async Task IapCheckAsync(User user, PaymentMethodType paymentMethodType)
@@ -772,146 +685,6 @@ namespace Bit.Core.Services
                     throw new BadRequestException("Customer balance cannot exist when using in-app purchases.");
                 }
             }
-        }
-
-        public async Task UpdateLicenseAsync(User user, UserLicense license)
-        {
-            if(!_globalSettings.SelfHosted)
-            {
-                throw new InvalidOperationException("Licenses require self hosting.");
-            }
-
-            if(license == null || !_licenseService.VerifyLicense(license))
-            {
-                throw new BadRequestException("Invalid license.");
-            }
-
-            if(!license.CanUse(user))
-            {
-                throw new BadRequestException("This license is not valid for this user.");
-            }
-
-            var dir = $"{_globalSettings.LicenseDirectory}/user";
-            Directory.CreateDirectory(dir);
-            File.WriteAllText($"{dir}/{user.Id}.json", JsonConvert.SerializeObject(license, Formatting.Indented));
-
-            user.Premium = license.Premium;
-            user.RevisionDate = DateTime.UtcNow;
-            user.MaxStorageGb = _globalSettings.SelfHosted ? 10240 : license.MaxStorageGb; // 10 TB
-            user.LicenseKey = license.LicenseKey;
-            user.PremiumExpirationDate = license.Expires;
-            await SaveUserAsync(user);
-        }
-
-        public async Task<string> AdjustStorageAsync(User user, short storageAdjustmentGb)
-        {
-            if(user == null)
-            {
-                throw new ArgumentNullException(nameof(user));
-            }
-
-            if(!user.Premium)
-            {
-                throw new BadRequestException("Not a premium user.");
-            }
-
-            var secret = await BillingHelpers.AdjustStorageAsync(_paymentService, user, storageAdjustmentGb,
-                StoragePlanId);
-            await SaveUserAsync(user);
-            return secret;
-        }
-
-        public async Task ReplacePaymentMethodAsync(User user, string paymentToken, PaymentMethodType paymentMethodType)
-        {
-            if(paymentToken.StartsWith("btok_"))
-            {
-                throw new BadRequestException("Invalid token.");
-            }
-
-            var updated = await _paymentService.UpdatePaymentMethodAsync(user, paymentMethodType, paymentToken);
-            if(updated)
-            {
-                await SaveUserAsync(user);
-            }
-        }
-
-        public async Task CancelPremiumAsync(User user, bool? endOfPeriod = null)
-        {
-            var eop = endOfPeriod.GetValueOrDefault(true);
-            if(!endOfPeriod.HasValue && user.PremiumExpirationDate.HasValue &&
-                user.PremiumExpirationDate.Value < DateTime.UtcNow)
-            {
-                eop = false;
-            }
-            await _paymentService.CancelSubscriptionAsync(user, eop);
-        }
-
-        public async Task ReinstatePremiumAsync(User user)
-        {
-            await _paymentService.ReinstateSubscriptionAsync(user);
-        }
-
-        public async Task EnablePremiumAsync(Guid userId, DateTime? expirationDate)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            await EnablePremiumAsync(user, expirationDate);
-        }
-
-        public async Task EnablePremiumAsync(User user, DateTime? expirationDate)
-        {
-            if(user != null && !user.Premium && user.Gateway.HasValue)
-            {
-                user.Premium = true;
-                user.PremiumExpirationDate = expirationDate;
-                user.RevisionDate = DateTime.UtcNow;
-                await _userRepository.ReplaceAsync(user);
-            }
-        }
-
-        public async Task DisablePremiumAsync(Guid userId, DateTime? expirationDate)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            await DisablePremiumAsync(user, expirationDate);
-        }
-
-        public async Task DisablePremiumAsync(User user, DateTime? expirationDate)
-        {
-            if(user != null && user.Premium)
-            {
-                user.Premium = false;
-                user.PremiumExpirationDate = expirationDate;
-                user.RevisionDate = DateTime.UtcNow;
-                await _userRepository.ReplaceAsync(user);
-            }
-        }
-
-        public async Task UpdatePremiumExpirationAsync(Guid userId, DateTime? expirationDate)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if(user != null)
-            {
-                user.PremiumExpirationDate = expirationDate;
-                user.RevisionDate = DateTime.UtcNow;
-                await _userRepository.ReplaceAsync(user);
-            }
-        }
-
-        public async Task<UserLicense> GenerateLicenseAsync(User user, SubscriptionInfo subscriptionInfo = null)
-        {
-            if(user == null)
-            {
-                throw new NotFoundException();
-            }
-
-            if(subscriptionInfo == null && user.Gateway != null)
-            {
-                subscriptionInfo = await _paymentService.GetSubscriptionAsync(user);
-            }
-
-            return subscriptionInfo == null ? new UserLicense(user, _licenseService) :
-                new UserLicense(user, subscriptionInfo, _licenseService);
-        }
-
         public override async Task<bool> CheckPasswordAsync(User user, string password)
         {
             if(user == null)
@@ -933,68 +706,6 @@ namespace Bit.Core.Services
                 Logger.LogWarning(0, "Invalid password for user {userId}.", user.Id);
             }
             return success;
-        }
-
-        public async Task<bool> CanAccessPremium(ITwoFactorProvidersUser user)
-        {
-            var userId = user.GetUserId();
-            if(!userId.HasValue)
-            {
-                return false;
-            }
-            if(user.GetPremium())
-            {
-                return true;
-            }
-            var orgs = await _currentContext.OrganizationMembershipAsync(_organizationUserRepository, userId.Value);
-            if(!orgs.Any())
-            {
-                return false;
-            }
-            var orgAbilities = await _applicationCacheService.GetOrganizationAbilitiesAsync();
-            return orgs.Any(o => orgAbilities.ContainsKey(o.Id) &&
-                orgAbilities[o.Id].UsersGetPremium && orgAbilities[o.Id].Enabled);
-        }
-
-        public async Task<bool> TwoFactorIsEnabledAsync(ITwoFactorProvidersUser user)
-        {
-            var providers = user.GetTwoFactorProviders();
-            if(providers == null)
-            {
-                return false;
-            }
-
-            foreach(var p in providers)
-            {
-                if(p.Value?.Enabled ?? false)
-                {
-                    if(!TwoFactorProvider.RequiresPremium(p.Key))
-                    {
-                        return true;
-                    }
-                    if(await CanAccessPremium(user))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        public async Task<bool> TwoFactorProviderIsEnabledAsync(TwoFactorProviderType provider, ITwoFactorProvidersUser user)
-        {
-            var providers = user.GetTwoFactorProviders();
-            if(providers == null || !providers.ContainsKey(provider) || !providers[provider].Enabled)
-            {
-                return false;
-            }
-
-            if(!TwoFactorProvider.RequiresPremium(provider))
-            {
-                return true;
-            }
-
-            return await CanAccessPremium(user);
         }
 
         private async Task<IdentityResult> UpdatePasswordHash(User user, string newPassword,

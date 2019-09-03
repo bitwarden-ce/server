@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using Bit.Core.Utilities;
 
 namespace Bit.Setup
 {
@@ -21,7 +23,6 @@ namespace Bit.Setup
             _globalValues = new Dictionary<string, string>
             {
                 ["ASPNETCORE_ENVIRONMENT"] = "Production",
-                ["globalSettings__selfHosted"] = "true",
                 ["globalSettings__baseServiceUri__vault"] = "http://localhost",
                 ["globalSettings__baseServiceUri__api"] = "http://localhost/api",
                 ["globalSettings__baseServiceUri__identity"] = "http://localhost/identity",
@@ -32,8 +33,6 @@ namespace Bit.Setup
                 ["globalSettings__baseServiceUri__internalIdentity"] = "http://identity:5000",
                 ["globalSettings__baseServiceUri__internalApi"] = "http://api:5000",
                 ["globalSettings__baseServiceUri__internalVault"] = "http://web:5000",
-                ["globalSettings__pushRelayBaseUri"] = "https://push.bitwarden.com",
-                ["globalSettings__installation__identityUri"] = "https://identity.bitwarden.com",
             };
             _mssqlValues = new Dictionary<string, string>
             {
@@ -53,22 +52,17 @@ namespace Bit.Setup
         public void BuildForUpdater()
         {
             Init();
+            
             LoadExistingValues(_globalOverrideValues, "/bitwarden/env/global.override.env");
             LoadExistingValues(_mssqlOverrideValues, "/bitwarden/env/mssql.override.env");
 
-            if(_context.Config.PushNotifications &&
-                _globalOverrideValues.ContainsKey("globalSettings__pushRelayBaseUri") &&
-                _globalOverrideValues["globalSettings__pushRelayBaseUri"] == "REPLACE")
-            {
-                _globalOverrideValues.Remove("globalSettings__pushRelayBaseUri");
-            }
-
+            Update();
             Build();
         }
 
         private void Init()
         {
-            var dbPassword = _context.Stub ? "RANDOM_DATABASE_PASSWORD" : Helpers.SecureRandomString(32);
+            var dbPassword = _context.Stub ? "RANDOM_DATABASE_PASSWORD" : CoreHelpers.SecureRandomString(32);
             var dbConnectionString = new SqlConnectionStringBuilder
             {
                 DataSource = "tcp:mssql,1433",
@@ -97,9 +91,9 @@ namespace Bit.Setup
                 ["globalSettings__logDirectory"] = $"{_context.OutputDir}/logs",
                 ["globalSettings__licenseDirectory"] = $"{_context.OutputDir}/core/licenses",
                 ["globalSettings__internalIdentityKey"] = _context.Stub ? "RANDOM_IDENTITY_KEY" :
-                    Helpers.SecureRandomString(64, alpha: true, numeric: true),
+                    CoreHelpers.SecureRandomString(64, alpha: true, numeric: true),
                 ["globalSettings__duo__aKey"] = _context.Stub ? "RANDOM_DUO_AKEY" :
-                    Helpers.SecureRandomString(64, alpha: true, numeric: true),
+                    CoreHelpers.SecureRandomString(64, alpha: true, numeric: true),
                 ["globalSettings__installation__id"] = _context.Install?.InstallationId.ToString(),
                 ["globalSettings__installation__key"] = _context.Install?.InstallationKey,
                 ["globalSettings__yubico__clientId"] = "REPLACE",
@@ -114,11 +108,6 @@ namespace Bit.Setup
                 ["globalSettings__hibpApiKey"] = "REPLACE",
                 ["adminSettings__admins"] = string.Empty,
             };
-
-            if(!_context.Config.PushNotifications)
-            {
-                _globalOverrideValues.Add("globalSettings__pushRelayBaseUri", "REPLACE");
-            }
 
             _mssqlOverrideValues = new Dictionary<string, string>
             {
@@ -164,6 +153,16 @@ namespace Bit.Setup
                     _values.Add(lineParts[0], value);
                 }
             }
+        }
+
+        private void Update()
+        {
+            var disableUserRegistration = !_context.Config.EnableUserRegistration;
+            
+            _globalOverrideValues["globalSettings__disableUserRegistration"] =
+                disableUserRegistration.ToString().ToLower();
+            _globalOverrideValues["adminSettings__admins"] = string.Join(",",
+                _context.Config.Admins.DefaultIfEmpty());
         }
 
         private void Build()

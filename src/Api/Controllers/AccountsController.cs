@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,8 +10,6 @@ using System.Linq;
 using Bit.Core.Repositories;
 using Bit.Core.Utilities;
 using Bit.Core;
-using Bit.Core.Models.Business;
-using Bit.Api.Utilities;
 using Bit.Core.Models.Table;
 using System.Collections.Generic;
 using Bit.Core.Models.Data;
@@ -27,7 +25,6 @@ namespace Bit.Api.Controllers
         private readonly ICipherRepository _cipherRepository;
         private readonly IFolderRepository _folderRepository;
         private readonly IOrganizationUserRepository _organizationUserRepository;
-        private readonly IPaymentService _paymentService;
         private readonly GlobalSettings _globalSettings;
 
         public AccountsController(
@@ -36,7 +33,6 @@ namespace Bit.Api.Controllers
             ICipherRepository cipherRepository,
             IFolderRepository folderRepository,
             IOrganizationUserRepository organizationUserRepository,
-            IPaymentService paymentService,
             GlobalSettings globalSettings)
         {
             _userService = userService;
@@ -44,7 +40,6 @@ namespace Bit.Api.Controllers
             _cipherRepository = cipherRepository;
             _folderRepository = folderRepository;
             _organizationUserRepository = organizationUserRepository;
-            _paymentService = paymentService;
             _globalSettings = globalSettings;
         }
 
@@ -308,8 +303,7 @@ namespace Bit.Api.Controllers
 
             var organizationUserDetails = await _organizationUserRepository.GetManyDetailsByUserAsync(user.Id,
                 OrganizationUserStatusType.Confirmed);
-            var response = new ProfileResponseModel(user, organizationUserDetails,
-                await _userService.TwoFactorIsEnabledAsync(user));
+            var response = new ProfileResponseModel(user, organizationUserDetails);
             return response;
         }
 
@@ -334,7 +328,7 @@ namespace Bit.Api.Controllers
             }
 
             await _userService.SaveUserAsync(model.ToUser(user));
-            var response = new ProfileResponseModel(user, null, await _userService.TwoFactorIsEnabledAsync(user));
+            var response = new ProfileResponseModel(user, null);
             return response;
         }
 
@@ -440,7 +434,6 @@ namespace Bit.Api.Controllers
             await Task.Delay(2000);
             throw new BadRequestException(ModelState);
         }
-
         [HttpPost("iap-check")]
         public async Task PostIapCheck([FromBody]IapCheckRequestModel model)
         {
@@ -452,152 +445,5 @@ namespace Bit.Api.Controllers
             await _userService.IapCheckAsync(user, model.PaymentMethodType.Value);
         }
 
-        [HttpPost("premium")]
-        public async Task<PaymentResponseModel> PostPremium(PremiumRequestModel model)
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var valid = model.Validate(_globalSettings);
-            UserLicense license = null;
-            if(valid && _globalSettings.SelfHosted)
-            {
-                license = await ApiHelpers.ReadJsonFileFromBody<UserLicense>(HttpContext, model.License);
-            }
-
-            if(!valid || (_globalSettings.SelfHosted && license == null))
-            {
-                throw new BadRequestException("Invalid license.");
-            }
-
-            var result = await _userService.SignUpPremiumAsync(user, model.PaymentToken,
-                model.PaymentMethodType.Value, model.AdditionalStorageGb.GetValueOrDefault(0), license);
-            var profile = new ProfileResponseModel(user, null, await _userService.TwoFactorIsEnabledAsync(user));
-            return new PaymentResponseModel
-            {
-                UserProfile = profile,
-                PaymentIntentClientSecret = result.Item2,
-                Success = result.Item1
-            };
-        }
-
-        [HttpGet("billing")]
-        [SelfHosted(NotSelfHostedOnly = true)]
-        public async Task<BillingResponseModel> GetBilling()
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var billingInfo = await _paymentService.GetBillingAsync(user);
-            return new BillingResponseModel(billingInfo);
-        }
-
-        [HttpGet("subscription")]
-        public async Task<SubscriptionResponseModel> GetSubscription()
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            if(!_globalSettings.SelfHosted && user.Gateway != null)
-            {
-                var subscriptionInfo = await _paymentService.GetSubscriptionAsync(user);
-                var license = await _userService.GenerateLicenseAsync(user, subscriptionInfo);
-                return new SubscriptionResponseModel(user, subscriptionInfo, license);
-            }
-            else if(!_globalSettings.SelfHosted)
-            {
-                var license = await _userService.GenerateLicenseAsync(user);
-                return new SubscriptionResponseModel(user, license);
-            }
-            else
-            {
-                return new SubscriptionResponseModel(user);
-            }
-        }
-
-        [HttpPost("payment")]
-        [SelfHosted(NotSelfHostedOnly = true)]
-        public async Task PostPayment([FromBody]PaymentRequestModel model)
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            await _userService.ReplacePaymentMethodAsync(user, model.PaymentToken, model.PaymentMethodType.Value);
-        }
-
-        [HttpPost("storage")]
-        [SelfHosted(NotSelfHostedOnly = true)]
-        public async Task<PaymentResponseModel> PostStorage([FromBody]StorageRequestModel model)
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var result = await _userService.AdjustStorageAsync(user, model.StorageGbAdjustment.Value);
-            return new PaymentResponseModel
-            {
-                Success = true,
-                PaymentIntentClientSecret = result
-            };
-        }
-
-        [HttpPost("license")]
-        [SelfHosted(SelfHostedOnly = true)]
-        public async Task PostLicense(LicenseRequestModel model)
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var license = await ApiHelpers.ReadJsonFileFromBody<UserLicense>(HttpContext, model.License);
-            if(license == null)
-            {
-                throw new BadRequestException("Invalid license");
-            }
-
-            await _userService.UpdateLicenseAsync(user, license);
-        }
-
-        [HttpPost("cancel-premium")]
-        [SelfHosted(NotSelfHostedOnly = true)]
-        public async Task PostCancel()
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            await _userService.CancelPremiumAsync(user);
-        }
-
-        [HttpPost("reinstate-premium")]
-        [SelfHosted(NotSelfHostedOnly = true)]
-        public async Task PostReinstate()
-        {
-            var user = await _userService.GetUserByPrincipalAsync(User);
-            if(user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            await _userService.ReinstatePremiumAsync(user);
-        }
     }
 }

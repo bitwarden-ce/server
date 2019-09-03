@@ -19,12 +19,7 @@ namespace Bit.Core.Repositories.SqlServer
         public UserRepository(string connectionString, string readOnlyConnectionString)
             : base(connectionString, readOnlyConnectionString)
         { }
-
-        public override async Task<User> GetByIdAsync(Guid id)
-        {
-            return await base.GetByIdAsync(id);
-        }
-
+        
         public async Task<User> GetByEmailAsync(string email)
         {
             using(var connection = new SqlConnection(ConnectionString))
@@ -60,19 +55,6 @@ namespace Bit.Core.Repositories.SqlServer
                     new { Email = email, Skip = skip, Take = take },
                     commandType: CommandType.StoredProcedure,
                     commandTimeout: 120);
-
-                return results.ToList();
-            }
-        }
-
-        public async Task<ICollection<User>> GetManyByPremiumAsync(bool premium)
-        {
-            using(var connection = new SqlConnection(ConnectionString))
-            {
-                var results = await connection.QueryAsync<User>(
-                    "[dbo].[User_ReadByPremium]",
-                    new { Premium = premium },
-                    commandType: CommandType.StoredProcedure);
 
                 return results.ToList();
             }
@@ -118,29 +100,6 @@ namespace Bit.Core.Repositories.SqlServer
                     new { Id = user.Id },
                     commandType: CommandType.StoredProcedure,
                     commandTimeout: 180);
-            }
-        }
-
-        public async Task UpdateStorageAsync(Guid id)
-        {
-            using(var connection = new SqlConnection(ConnectionString))
-            {
-                await connection.ExecuteAsync(
-                    $"[{Schema}].[{Table}_UpdateStorage]",
-                    new { Id = id },
-                    commandType: CommandType.StoredProcedure,
-                    commandTimeout: 180);
-            }
-        }
-
-        public async Task UpdateRenewalReminderDateAsync(Guid id, DateTime renewalReminderDate)
-        {
-            using(var connection = new SqlConnection(ConnectionString))
-            {
-                await connection.ExecuteAsync(
-                    $"[{Schema}].[User_UpdateRenewalReminderDate]",
-                    new { Id = id, RenewalReminderDate = renewalReminderDate },
-                    commandType: CommandType.StoredProcedure);
             }
         }
     }

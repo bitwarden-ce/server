@@ -4,16 +4,12 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Bit.Core.Models.Table;
 using Bit.Core.Repositories;
-using Bit.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Bit.Core.Identity
 {
     public class UserStore :
-        IUserStore<User>,
         IUserPasswordStore<User>,
         IUserEmailStore<User>,
-        IUserTwoFactorStore<User>,
         IUserSecurityStampStore<User>
     {
         private readonly IServiceProvider _serviceProvider;
@@ -159,17 +155,6 @@ namespace Bit.Core.Identity
             user.RevisionDate = user.AccountRevisionDate = DateTime.UtcNow;
             await _userRepository.ReplaceAsync(user);
             return IdentityResult.Success;
-        }
-
-        public Task SetTwoFactorEnabledAsync(User user, bool enabled, CancellationToken cancellationToken)
-        {
-            // Do nothing...
-            return Task.FromResult(0);
-        }
-
-        public async Task<bool> GetTwoFactorEnabledAsync(User user, CancellationToken cancellationToken)
-        {
-            return await _serviceProvider.GetRequiredService<IUserService>().TwoFactorIsEnabledAsync(user);
         }
 
         public Task SetSecurityStampAsync(User user, string stamp, CancellationToken cancellationToken)

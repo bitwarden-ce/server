@@ -55,8 +55,7 @@ namespace Bit.Api.Public.Controllers
             {
                 return new NotFoundResult();
             }
-            var response = new MemberResponseModel(orgUser, await _userService.TwoFactorIsEnabledAsync(orgUser),
-                userDetails.Item2);
+            var response = new MemberResponseModel(orgUser, userDetails.Item2);
             return new JsonResult(response);
         }
 
@@ -96,9 +95,7 @@ namespace Bit.Api.Public.Controllers
             var users = await _organizationUserRepository.GetManyDetailsByOrganizationAsync(
                 _currentContext.OrganizationId.Value);
             // TODO: Get all CollectionUser associations for the organization and marry them up here for the response.
-            var memberResponsesTasks = users.Select(async u => new MemberResponseModel(u,
-                await _userService.TwoFactorIsEnabledAsync(u), null));
-            var memberResponses = await Task.WhenAll(memberResponsesTasks);
+            var memberResponses = users.Select(u => new MemberResponseModel(u, null));
             var response = new ListResponseModel<MemberResponseModel>(memberResponses);
             return new JsonResult(response);
         }
@@ -149,8 +146,7 @@ namespace Bit.Api.Public.Controllers
             if(existingUser.UserId.HasValue)
             {
                 var existingUserDetails = await _organizationUserRepository.GetDetailsByIdAsync(id);
-                response = new MemberResponseModel(existingUserDetails,
-                    await _userService.TwoFactorIsEnabledAsync(existingUserDetails), associations);
+                response = new MemberResponseModel(existingUserDetails, associations);
             }
             else
             {

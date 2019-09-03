@@ -26,16 +26,13 @@ namespace Bit.Core.Test.Services
             var pushNotService = Substitute.For<IPushNotificationService>();
             var pushRegService = Substitute.For<IPushRegistrationService>();
             var deviceRepo = Substitute.For<IDeviceRepository>();
-            var licenseService = Substitute.For<ILicensingService>();
             var eventService = Substitute.For<IEventService>();
             var installationRepo = Substitute.For<IInstallationRepository>();
-            var appCacheService = Substitute.For<IApplicationCacheService>();
-            var paymentService = Substitute.For<IPaymentService>();
             var globalSettings = Substitute.For<GlobalSettings>();
 
             var orgService = new OrganizationService(orgRepo, orgUserRepo, collectionRepo, userRepo,
                 groupRepo, dataProtector, mailService, pushNotService, pushRegService, deviceRepo,
-                licenseService, eventService, installationRepo, appCacheService, paymentService, globalSettings);
+                eventService, installationRepo, globalSettings);
 
             var id = Guid.NewGuid();
             var userId = Guid.NewGuid();
@@ -43,9 +40,6 @@ namespace Bit.Core.Test.Services
             {
                 Id = id,
                 Name = "Test Org",
-                UseDirectory = true,
-                UseGroups = true,
-                Seats = 3
             };
             orgRepo.GetByIdAsync(id).Returns(org);
 
@@ -82,16 +76,13 @@ namespace Bit.Core.Test.Services
             var pushNotService = Substitute.For<IPushNotificationService>();
             var pushRegService = Substitute.For<IPushRegistrationService>();
             var deviceRepo = Substitute.For<IDeviceRepository>();
-            var licenseService = Substitute.For<ILicensingService>();
             var eventService = Substitute.For<IEventService>();
             var installationRepo = Substitute.For<IInstallationRepository>();
-            var appCacheService = Substitute.For<IApplicationCacheService>();
-            var paymentService = Substitute.For<IPaymentService>();
             var globalSettings = Substitute.For<GlobalSettings>();
 
             var orgService = new OrganizationService(orgRepo, orgUserRepo, collectionRepo, userRepo,
                 groupRepo, dataProtector, mailService, pushNotService, pushRegService, deviceRepo,
-                licenseService, eventService, installationRepo, appCacheService, paymentService, globalSettings);
+                eventService, installationRepo, globalSettings);
 
             var id = Guid.NewGuid();
             var userId = Guid.NewGuid();
@@ -99,9 +90,6 @@ namespace Bit.Core.Test.Services
             {
                 Id = id,
                 Name = "Test Org",
-                UseDirectory = true,
-                UseGroups = true,
-                Seats = 3
             };
             orgRepo.GetByIdAsync(id).Returns(org);
 

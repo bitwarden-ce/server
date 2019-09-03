@@ -11,8 +11,6 @@ using Microsoft.AspNetCore.DataProtection;
 using Stripe;
 using Bit.Core.Enums;
 using Bit.Core.Models.Data;
-using System.IO;
-using Newtonsoft.Json;
 
 namespace Bit.Core.Services
 {
@@ -28,11 +26,8 @@ namespace Bit.Core.Services
         private readonly IPushNotificationService _pushNotificationService;
         private readonly IPushRegistrationService _pushRegistrationService;
         private readonly IDeviceRepository _deviceRepository;
-        private readonly ILicensingService _licensingService;
         private readonly IEventService _eventService;
         private readonly IInstallationRepository _installationRepository;
-        private readonly IApplicationCacheService _applicationCacheService;
-        private readonly IPaymentService _paymentService;
         private readonly GlobalSettings _globalSettings;
 
         public OrganizationService(
@@ -46,11 +41,8 @@ namespace Bit.Core.Services
             IPushNotificationService pushNotificationService,
             IPushRegistrationService pushRegistrationService,
             IDeviceRepository deviceRepository,
-            ILicensingService licensingService,
             IEventService eventService,
             IInstallationRepository installationRepository,
-            IApplicationCacheService applicationCacheService,
-            IPaymentService paymentService,
             GlobalSettings globalSettings)
         {
             _organizationRepository = organizationRepository;
@@ -63,494 +55,24 @@ namespace Bit.Core.Services
             _pushNotificationService = pushNotificationService;
             _pushRegistrationService = pushRegistrationService;
             _deviceRepository = deviceRepository;
-            _licensingService = licensingService;
             _eventService = eventService;
             _installationRepository = installationRepository;
-            _applicationCacheService = applicationCacheService;
-            _paymentService = paymentService;
             _globalSettings = globalSettings;
         }
-
-        public async Task ReplacePaymentMethodAsync(Guid organizationId, string paymentToken,
-            PaymentMethodType paymentMethodType)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            var updated = await _paymentService.UpdatePaymentMethodAsync(organization,
-                paymentMethodType, paymentToken);
-            if(updated)
-            {
-                await ReplaceAndUpdateCache(organization);
-            }
-        }
-
-        public async Task CancelSubscriptionAsync(Guid organizationId, bool? endOfPeriod = null)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            var eop = endOfPeriod.GetValueOrDefault(true);
-            if(!endOfPeriod.HasValue && organization.ExpirationDate.HasValue &&
-                organization.ExpirationDate.Value < DateTime.UtcNow)
-            {
-                eop = false;
-            }
-
-            await _paymentService.CancelSubscriptionAsync(organization, eop);
-        }
-
-        public async Task ReinstateSubscriptionAsync(Guid organizationId)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            await _paymentService.ReinstateSubscriptionAsync(organization);
-        }
-
-        public async Task<Tuple<bool, string>> UpgradePlanAsync(Guid organizationId, OrganizationUpgrade upgrade)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            if(string.IsNullOrWhiteSpace(organization.GatewayCustomerId))
-            {
-                throw new BadRequestException("Your account has no payment method available.");
-            }
-
-            var existingPlan = StaticStore.Plans.FirstOrDefault(p => p.Type == organization.PlanType);
-            if(existingPlan == null)
-            {
-                throw new BadRequestException("Existing plan not found.");
-            }
-
-            var newPlan = StaticStore.Plans.FirstOrDefault(p => p.Type == upgrade.Plan && !p.Disabled);
-            if(newPlan == null)
-            {
-                throw new BadRequestException("Plan not found.");
-            }
-
-            if(existingPlan.Type == newPlan.Type)
-            {
-                throw new BadRequestException("Organization is already on this plan.");
-            }
-
-            if(existingPlan.UpgradeSortOrder >= newPlan.UpgradeSortOrder)
-            {
-                throw new BadRequestException("You cannot upgrade to this plan.");
-            }
-
-            if(existingPlan.Type != PlanType.Free)
-            {
-                throw new BadRequestException("You can only upgrade from the free plan. Contact support.");
-            }
-
-            ValidateOrganizationUpgradeParameters(newPlan, upgrade);
-
-            var newPlanSeats = (short)(newPlan.BaseSeats +
-                (newPlan.CanBuyAdditionalSeats ? upgrade.AdditionalSeats : 0));
-            if(!organization.Seats.HasValue || organization.Seats.Value > newPlanSeats)
-            {
-                var userCount = await _organizationUserRepository.GetCountByOrganizationIdAsync(organization.Id);
-                if(userCount > newPlanSeats)
-                {
-                    throw new BadRequestException($"Your organization currently has {userCount} seats filled. " +
-                        $"Your new plan only has ({newPlanSeats}) seats. Remove some users.");
-                }
-            }
-
-            if(newPlan.MaxCollections.HasValue && (!organization.MaxCollections.HasValue ||
-                organization.MaxCollections.Value > newPlan.MaxCollections.Value))
-            {
-                var collectionCount = await _collectionRepository.GetCountByOrganizationIdAsync(organization.Id);
-                if(collectionCount > newPlan.MaxCollections.Value)
-                {
-                    throw new BadRequestException($"Your organization currently has {collectionCount} collections. " +
-                        $"Your new plan allows for a maximum of ({newPlan.MaxCollections.Value}) collections. " +
-                        "Remove some collections.");
-                }
-            }
-
-            if(!newPlan.UseGroups && organization.UseGroups)
-            {
-                var groups = await _groupRepository.GetManyByOrganizationIdAsync(organization.Id);
-                if(groups.Any())
-                {
-                    throw new BadRequestException($"Your new plan does not allow the groups feature. " +
-                        $"Remove your groups.");
-                }
-            }
-
-            // TODO: Check storage?
-
-            string paymentIntentClientSecret = null;
-            var success = true;
-            if(string.IsNullOrWhiteSpace(organization.GatewaySubscriptionId))
-            {
-                paymentIntentClientSecret = await _paymentService.UpgradeFreeOrganizationAsync(organization, newPlan,
-                    upgrade.AdditionalStorageGb, upgrade.AdditionalSeats, upgrade.PremiumAccessAddon);
-                success = string.IsNullOrWhiteSpace(paymentIntentClientSecret);
-            }
-            else
-            {
-                // TODO: Update existing sub
-                throw new BadRequestException("You can only upgrade from the free plan. Contact support.");
-            }
-
-            organization.BusinessName = upgrade.BusinessName;
-            organization.PlanType = newPlan.Type;
-            organization.Seats = (short)(newPlan.BaseSeats + upgrade.AdditionalSeats);
-            organization.MaxCollections = newPlan.MaxCollections;
-            organization.MaxStorageGb = !newPlan.MaxStorageGb.HasValue ?
-                (short?)null : (short)(newPlan.MaxStorageGb.Value + upgrade.AdditionalStorageGb);
-            organization.UseGroups = newPlan.UseGroups;
-            organization.UseDirectory = newPlan.UseDirectory;
-            organization.UseEvents = newPlan.UseEvents;
-            organization.UseTotp = newPlan.UseTotp;
-            organization.Use2fa = newPlan.Use2fa;
-            organization.UseApi = newPlan.UseApi;
-            organization.SelfHost = newPlan.SelfHost;
-            organization.UsersGetPremium = newPlan.UsersGetPremium || upgrade.PremiumAccessAddon;
-            organization.Plan = newPlan.Name;
-            organization.Enabled = success;
-            await ReplaceAndUpdateCache(organization);
-
-            return new Tuple<bool, string>(success, paymentIntentClientSecret);
-        }
-
-        public async Task<string> AdjustStorageAsync(Guid organizationId, short storageAdjustmentGb)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            var plan = StaticStore.Plans.FirstOrDefault(p => p.Type == organization.PlanType);
-            if(plan == null)
-            {
-                throw new BadRequestException("Existing plan not found.");
-            }
-
-            if(!plan.MaxStorageGb.HasValue)
-            {
-                throw new BadRequestException("Plan does not allow additional storage.");
-            }
-
-            var secret = await BillingHelpers.AdjustStorageAsync(_paymentService, organization, storageAdjustmentGb,
-                plan.StripeStoragePlanId);
-            await ReplaceAndUpdateCache(organization);
-            return secret;
-        }
-
-        public async Task<string> AdjustSeatsAsync(Guid organizationId, int seatAdjustment)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            if(string.IsNullOrWhiteSpace(organization.GatewayCustomerId))
-            {
-                throw new BadRequestException("No payment method found.");
-            }
-
-            if(string.IsNullOrWhiteSpace(organization.GatewaySubscriptionId))
-            {
-                throw new BadRequestException("No subscription found.");
-            }
-
-            var plan = StaticStore.Plans.FirstOrDefault(p => p.Type == organization.PlanType);
-            if(plan == null)
-            {
-                throw new BadRequestException("Existing plan not found.");
-            }
-
-            if(!plan.CanBuyAdditionalSeats)
-            {
-                throw new BadRequestException("Plan does not allow additional seats.");
-            }
-
-            var newSeatTotal = organization.Seats + seatAdjustment;
-            if(plan.BaseSeats > newSeatTotal)
-            {
-                throw new BadRequestException($"Plan has a minimum of {plan.BaseSeats} seats.");
-            }
-
-            if(newSeatTotal <= 0)
-            {
-                throw new BadRequestException("You must have at least 1 seat.");
-            }
-
-            var additionalSeats = newSeatTotal - plan.BaseSeats;
-            if(plan.MaxAdditionalSeats.HasValue && additionalSeats > plan.MaxAdditionalSeats.Value)
-            {
-                throw new BadRequestException($"Organization plan allows a maximum of " +
-                    $"{plan.MaxAdditionalSeats.Value} additional seats.");
-            }
-
-            if(!organization.Seats.HasValue || organization.Seats.Value > newSeatTotal)
-            {
-                var userCount = await _organizationUserRepository.GetCountByOrganizationIdAsync(organization.Id);
-                if(userCount > newSeatTotal)
-                {
-                    throw new BadRequestException($"Your organization currently has {userCount} seats filled. " +
-                        $"Your new plan only has ({newSeatTotal}) seats. Remove some users.");
-                }
-            }
-
-            var subscriptionItemService = new SubscriptionItemService();
-            var subscriptionService = new SubscriptionService();
-            var sub = await subscriptionService.GetAsync(organization.GatewaySubscriptionId);
-            if(sub == null)
-            {
-                throw new BadRequestException("Subscription not found.");
-            }
-
-            Func<bool, Task<SubscriptionItem>> subUpdateAction = null;
-            var seatItem = sub.Items?.Data?.FirstOrDefault(i => i.Plan.Id == plan.StripeSeatPlanId);
-            var subItemOptions = sub.Items.Where(i => i.Plan.Id != plan.StripeSeatPlanId)
-                .Select(i => new InvoiceSubscriptionItemOptions
-                {
-                    Id = i.Id,
-                    PlanId = i.Plan.Id,
-                    Quantity = i.Quantity,
-                }).ToList();
-
-            if(additionalSeats > 0 && seatItem == null)
-            {
-                subItemOptions.Add(new InvoiceSubscriptionItemOptions
-                {
-                    PlanId = plan.StripeSeatPlanId,
-                    Quantity = additionalSeats,
-                });
-                subUpdateAction = (prorate) => subscriptionItemService.CreateAsync(
-                    new SubscriptionItemCreateOptions
-                    {
-                        PlanId = plan.StripeSeatPlanId,
-                        Quantity = additionalSeats,
-                        Prorate = prorate,
-                        SubscriptionId = sub.Id
-                    });
-            }
-            else if(additionalSeats > 0 && seatItem != null)
-            {
-                subItemOptions.Add(new InvoiceSubscriptionItemOptions
-                {
-                    Id = seatItem.Id,
-                    PlanId = plan.StripeSeatPlanId,
-                    Quantity = additionalSeats,
-                });
-                subUpdateAction = (prorate) => subscriptionItemService.UpdateAsync(seatItem.Id,
-                    new SubscriptionItemUpdateOptions
-                    {
-                        PlanId = plan.StripeSeatPlanId,
-                        Quantity = additionalSeats,
-                        Prorate = prorate
-                    });
-            }
-            else if(seatItem != null && additionalSeats == 0)
-            {
-                subItemOptions.Add(new InvoiceSubscriptionItemOptions
-                {
-                    Id = seatItem.Id,
-                    Deleted = true
-                });
-                subUpdateAction = (prorate) => subscriptionItemService.DeleteAsync(seatItem.Id);
-            }
-
-            string paymentIntentClientSecret = null;
-            var invoicedNow = false;
-            if(additionalSeats > 0)
-            {
-                var result = await (_paymentService as StripePaymentService).PreviewUpcomingInvoiceAndPayAsync(
-                    organization, plan.StripeSeatPlanId, subItemOptions, 500);
-                invoicedNow = result.Item1;
-                paymentIntentClientSecret = result.Item2;
-            }
-
-            await subUpdateAction(!invoicedNow);
-            organization.Seats = (short?)newSeatTotal;
-            await ReplaceAndUpdateCache(organization);
-            return paymentIntentClientSecret;
-        }
-
-        public async Task VerifyBankAsync(Guid organizationId, int amount1, int amount2)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            if(string.IsNullOrWhiteSpace(organization.GatewayCustomerId))
-            {
-                throw new GatewayException("Not a gateway customer.");
-            }
-
-            var bankService = new BankAccountService();
-            var customerService = new CustomerService();
-            var customer = await customerService.GetAsync(organization.GatewayCustomerId);
-            if(customer == null)
-            {
-                throw new GatewayException("Cannot find customer.");
-            }
-
-            var bankAccount = customer.Sources
-                    .FirstOrDefault(s => s is BankAccount && ((BankAccount)s).Status != "verified") as BankAccount;
-            if(bankAccount == null)
-            {
-                throw new GatewayException("Cannot find an unverified bank account.");
-            }
-
-            try
-            {
-                var result = await bankService.VerifyAsync(organization.GatewayCustomerId, bankAccount.Id,
-                    new BankAccountVerifyOptions { Amounts = new List<long> { amount1, amount2 } });
-                if(result.Status != "verified")
-                {
-                    throw new GatewayException("Unable to verify account.");
-                }
-            }
-            catch(StripeException e)
-            {
-                throw new GatewayException(e.Message);
-            }
-        }
-
+        
         public async Task<Tuple<Organization, OrganizationUser>> SignUpAsync(OrganizationSignup signup)
         {
-            var plan = StaticStore.Plans.FirstOrDefault(p => p.Type == signup.Plan && !p.Disabled);
-            if(plan == null)
-            {
-                throw new BadRequestException("Plan not found.");
-            }
-
-            ValidateOrganizationUpgradeParameters(plan, signup);
-
             var organization = new Organization
             {
-                // Pre-generate the org id so that we can save it with the Stripe subscription..
                 Id = CoreHelpers.GenerateComb(),
                 Name = signup.Name,
-                BillingEmail = signup.BillingEmail,
                 BusinessName = signup.BusinessName,
-                PlanType = plan.Type,
-                Seats = (short)(plan.BaseSeats + signup.AdditionalSeats),
-                MaxCollections = plan.MaxCollections,
-                MaxStorageGb = !plan.MaxStorageGb.HasValue ?
-                    (short?)null : (short)(plan.MaxStorageGb.Value + signup.AdditionalStorageGb),
-                UseGroups = plan.UseGroups,
-                UseEvents = plan.UseEvents,
-                UseDirectory = plan.UseDirectory,
-                UseTotp = plan.UseTotp,
-                Use2fa = plan.Use2fa,
-                UseApi = plan.UseApi,
-                SelfHost = plan.SelfHost,
-                UsersGetPremium = plan.UsersGetPremium || signup.PremiumAccessAddon,
-                Plan = plan.Name,
-                Gateway = null,
-                Enabled = true,
-                LicenseKey = CoreHelpers.SecureRandomString(20),
                 ApiKey = CoreHelpers.SecureRandomString(30),
                 CreationDate = DateTime.UtcNow,
                 RevisionDate = DateTime.UtcNow
             };
-
-            if(plan.Type == PlanType.Free)
-            {
-                var adminCount =
-                    await _organizationUserRepository.GetCountByFreeOrganizationAdminUserAsync(signup.Owner.Id);
-                if(adminCount > 0)
-                {
-                    throw new BadRequestException("You can only be an admin of one free organization.");
-                }
-            }
-            else
-            {
-                await _paymentService.PurchaseOrganizationAsync(organization, signup.PaymentMethodType.Value,
-                    signup.PaymentToken, plan, signup.AdditionalStorageGb, signup.AdditionalSeats,
-                    signup.PremiumAccessAddon);
-            }
-
+            
             return await SignUpAsync(organization, signup.Owner.Id, signup.OwnerKey, signup.CollectionName, true);
-        }
-
-        public async Task<Tuple<Organization, OrganizationUser>> SignUpAsync(
-            OrganizationLicense license, User owner, string ownerKey, string collectionName)
-        {
-            if(license == null || !_licensingService.VerifyLicense(license))
-            {
-                throw new BadRequestException("Invalid license.");
-            }
-
-            if(!license.CanUse(_globalSettings))
-            {
-                throw new BadRequestException("Invalid license. Make sure your license allows for on-premise " +
-                    "hosting of organizations and that the installation id matches your current installation.");
-            }
-
-            if(license.PlanType != PlanType.Custom &&
-                StaticStore.Plans.FirstOrDefault(p => p.Type == license.PlanType && !p.Disabled) == null)
-            {
-                throw new BadRequestException("Plan not found.");
-            }
-
-            var enabledOrgs = await _organizationRepository.GetManyByEnabledAsync();
-            if(enabledOrgs.Any(o => o.LicenseKey.Equals(license.LicenseKey)))
-            {
-                throw new BadRequestException("License is already in use by another organization.");
-            }
-
-            var organization = new Organization
-            {
-                Name = license.Name,
-                BillingEmail = license.BillingEmail,
-                BusinessName = license.BusinessName,
-                PlanType = license.PlanType,
-                Seats = license.Seats,
-                MaxCollections = license.MaxCollections,
-                MaxStorageGb = _globalSettings.SelfHosted ? 10240 : license.MaxStorageGb, // 10 TB
-                UseGroups = license.UseGroups,
-                UseDirectory = license.UseDirectory,
-                UseEvents = license.UseEvents,
-                UseTotp = license.UseTotp,
-                Use2fa = license.Use2fa,
-                UseApi = license.UseApi,
-                Plan = license.Plan,
-                SelfHost = license.SelfHost,
-                UsersGetPremium = license.UsersGetPremium,
-                Gateway = null,
-                GatewayCustomerId = null,
-                GatewaySubscriptionId = null,
-                Enabled = license.Enabled,
-                ExpirationDate = license.Expires,
-                LicenseKey = license.LicenseKey,
-                ApiKey = CoreHelpers.SecureRandomString(30),
-                CreationDate = DateTime.UtcNow,
-                RevisionDate = DateTime.UtcNow
-            };
-
-            var result = await SignUpAsync(organization, owner.Id, ownerKey, collectionName, false);
-
-            var dir = $"{_globalSettings.LicenseDirectory}/organization";
-            Directory.CreateDirectory(dir);
-            System.IO.File.WriteAllText($"{dir}/{organization.Id}.json",
-                JsonConvert.SerializeObject(license, Formatting.Indented));
-            return result;
         }
 
         private async Task<Tuple<Organization, OrganizationUser>> SignUpAsync(Organization organization,
@@ -559,7 +81,6 @@ namespace Bit.Core.Services
             try
             {
                 await _organizationRepository.CreateAsync(organization);
-                await _applicationCacheService.UpsertOrganizationAbilityAsync(organization);
 
                 var orgUser = new OrganizationUser
                 {
@@ -597,176 +118,21 @@ namespace Bit.Core.Services
             }
             catch
             {
-                if(withPayment)
-                {
-                    await _paymentService.CancelAndRecoverChargesAsync(organization);
-                }
-
                 if(organization.Id != default(Guid))
                 {
                     await _organizationRepository.DeleteAsync(organization);
-                    await _applicationCacheService.DeleteOrganizationAbilityAsync(organization.Id);
                 }
 
                 throw;
             }
         }
-
-        public async Task UpdateLicenseAsync(Guid organizationId, OrganizationLicense license)
-        {
-            var organization = await GetOrgById(organizationId);
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            if(!_globalSettings.SelfHosted)
-            {
-                throw new InvalidOperationException("Licenses require self hosting.");
-            }
-
-            if(license == null || !_licensingService.VerifyLicense(license))
-            {
-                throw new BadRequestException("Invalid license.");
-            }
-
-            if(!license.CanUse(_globalSettings))
-            {
-                throw new BadRequestException("Invalid license. Make sure your license allows for on-premise " +
-                    "hosting of organizations and that the installation id matches your current installation.");
-            }
-
-            var enabledOrgs = await _organizationRepository.GetManyByEnabledAsync();
-            if(enabledOrgs.Any(o => o.LicenseKey.Equals(license.LicenseKey) && o.Id != organizationId))
-            {
-                throw new BadRequestException("License is already in use by another organization.");
-            }
-
-            if(license.Seats.HasValue &&
-                (!organization.Seats.HasValue || organization.Seats.Value > license.Seats.Value))
-            {
-                var userCount = await _organizationUserRepository.GetCountByOrganizationIdAsync(organization.Id);
-                if(userCount > license.Seats.Value)
-                {
-                    throw new BadRequestException($"Your organization currently has {userCount} seats filled. " +
-                        $"Your new license only has ({ license.Seats.Value}) seats. Remove some users.");
-                }
-            }
-
-            if(license.MaxCollections.HasValue && (!organization.MaxCollections.HasValue ||
-                organization.MaxCollections.Value > license.MaxCollections.Value))
-            {
-                var collectionCount = await _collectionRepository.GetCountByOrganizationIdAsync(organization.Id);
-                if(collectionCount > license.MaxCollections.Value)
-                {
-                    throw new BadRequestException($"Your organization currently has {collectionCount} collections. " +
-                        $"Your new license allows for a maximum of ({license.MaxCollections.Value}) collections. " +
-                        "Remove some collections.");
-                }
-            }
-
-            if(!license.UseGroups && organization.UseGroups)
-            {
-                var groups = await _groupRepository.GetManyByOrganizationIdAsync(organization.Id);
-                if(groups.Count > 0)
-                {
-                    throw new BadRequestException($"Your organization currently has {groups.Count} groups. " +
-                        $"Your new license does not allow for the use of groups. Remove all groups.");
-                }
-            }
-
-            var dir = $"{_globalSettings.LicenseDirectory}/organization";
-            Directory.CreateDirectory(dir);
-            System.IO.File.WriteAllText($"{dir}/{organization.Id}.json",
-                JsonConvert.SerializeObject(license, Formatting.Indented));
-
-            organization.Name = license.Name;
-            organization.BusinessName = license.BusinessName;
-            organization.BillingEmail = license.BillingEmail;
-            organization.PlanType = license.PlanType;
-            organization.Seats = license.Seats;
-            organization.MaxCollections = license.MaxCollections;
-            organization.UseGroups = license.UseGroups;
-            organization.UseDirectory = license.UseDirectory;
-            organization.UseEvents = license.UseEvents;
-            organization.UseTotp = license.UseTotp;
-            organization.Use2fa = license.Use2fa;
-            organization.UseApi = license.UseApi;
-            organization.SelfHost = license.SelfHost;
-            organization.UsersGetPremium = license.UsersGetPremium;
-            organization.Plan = license.Plan;
-            organization.Enabled = license.Enabled;
-            organization.ExpirationDate = license.Expires;
-            organization.LicenseKey = license.LicenseKey;
-            organization.RevisionDate = DateTime.UtcNow;
-            await ReplaceAndUpdateCache(organization);
-        }
-
+        
         public async Task DeleteAsync(Organization organization)
         {
-            if(!string.IsNullOrWhiteSpace(organization.GatewaySubscriptionId))
-            {
-                try
-                {
-                    var eop = !organization.ExpirationDate.HasValue ||
-                        organization.ExpirationDate.Value >= DateTime.UtcNow;
-                    await _paymentService.CancelSubscriptionAsync(organization, eop);
-                }
-                catch(GatewayException) { }
-            }
-
             await _organizationRepository.DeleteAsync(organization);
-            await _applicationCacheService.DeleteOrganizationAbilityAsync(organization.Id);
         }
 
-        public async Task EnableAsync(Guid organizationId, DateTime? expirationDate)
-        {
-            var org = await GetOrgById(organizationId);
-            if(org != null && !org.Enabled && org.Gateway.HasValue)
-            {
-                org.Enabled = true;
-                org.ExpirationDate = expirationDate;
-                org.RevisionDate = DateTime.UtcNow;
-                await ReplaceAndUpdateCache(org);
-            }
-        }
-
-        public async Task DisableAsync(Guid organizationId, DateTime? expirationDate)
-        {
-            var org = await GetOrgById(organizationId);
-            if(org != null && org.Enabled)
-            {
-                org.Enabled = false;
-                org.ExpirationDate = expirationDate;
-                org.RevisionDate = DateTime.UtcNow;
-                await ReplaceAndUpdateCache(org);
-
-                // TODO: send email to owners?
-            }
-        }
-
-        public async Task UpdateExpirationDateAsync(Guid organizationId, DateTime? expirationDate)
-        {
-            var org = await GetOrgById(organizationId);
-            if(org != null)
-            {
-                org.ExpirationDate = expirationDate;
-                org.RevisionDate = DateTime.UtcNow;
-                await ReplaceAndUpdateCache(org);
-            }
-        }
-
-        public async Task EnableAsync(Guid organizationId)
-        {
-            var org = await GetOrgById(organizationId);
-            if(org != null && !org.Enabled)
-            {
-                org.Enabled = true;
-                await ReplaceAndUpdateCache(org);
-            }
-        }
-
-        public async Task UpdateAsync(Organization organization, bool updateBilling = false)
+        public async Task UpdateAsync(Organization organization)
         {
             if(organization.Id == default(Guid))
             {
@@ -774,16 +140,6 @@ namespace Bit.Core.Services
             }
 
             await ReplaceAndUpdateCache(organization, EventType.Organization_Updated);
-
-            if(updateBilling && !string.IsNullOrWhiteSpace(organization.GatewayCustomerId))
-            {
-                var customerService = new CustomerService();
-                await customerService.UpdateAsync(organization.GatewayCustomerId, new CustomerUpdateOptions
-                {
-                    Email = organization.BillingEmail,
-                    Description = organization.BusinessName
-                });
-            }
         }
 
         public async Task UpdateTwoFactorProviderAsync(Organization organization, TwoFactorProviderType type)
@@ -791,11 +147,6 @@ namespace Bit.Core.Services
             if(!type.ToString().Contains("Organization"))
             {
                 throw new ArgumentException("Not an organization provider type.");
-            }
-
-            if(!organization.Use2fa)
-            {
-                throw new BadRequestException("Organization cannot use 2FA.");
             }
 
             var providers = organization.GetTwoFactorProviders();
@@ -858,17 +209,6 @@ namespace Bit.Core.Services
                 if(!anyOwners)
                 {
                     throw new BadRequestException("Only owners can invite new owners.");
-                }
-            }
-
-            if(organization.Seats.HasValue)
-            {
-                var userCount = await _organizationUserRepository.GetCountByOrganizationIdAsync(organizationId);
-                var availableSeats = organization.Seats.Value - userCount;
-                if(availableSeats < emails.Count())
-                {
-                    throw new BadRequestException("You have reached the maximum number of users " +
-                        $"({organization.Seats.Value}) for this organization.");
                 }
             }
 
@@ -954,20 +294,6 @@ namespace Bit.Core.Services
                 throw new BadRequestException("User email does not match invite.");
             }
 
-            if(orgUser.Type == OrganizationUserType.Owner || orgUser.Type == OrganizationUserType.Admin)
-            {
-                var org = await GetOrgById(orgUser.OrganizationId);
-                if(org.PlanType == PlanType.Free)
-                {
-                    var adminCount = await _organizationUserRepository.GetCountByFreeOrganizationAdminUserAsync(
-                        user.Id);
-                    if(adminCount > 0)
-                    {
-                        throw new BadRequestException("You can only be an admin of one free organization.");
-                    }
-                }
-            }
-
             var existingOrgUserCount = await _organizationUserRepository.GetCountByOrganizationAsync(
                 orgUser.OrganizationId, user.Email, true);
             if(existingOrgUserCount > 0)
@@ -1001,16 +327,6 @@ namespace Bit.Core.Services
             }
 
             var org = await GetOrgById(organizationId);
-            if(org.PlanType == PlanType.Free &&
-                (orgUser.Type == OrganizationUserType.Admin || orgUser.Type == OrganizationUserType.Owner))
-            {
-                var adminCount = await _organizationUserRepository.GetCountByFreeOrganizationAdminUserAsync(
-                    orgUser.UserId.Value);
-                if(adminCount > 0)
-                {
-                    throw new BadRequestException("User can only be an admin of one free organization.");
-                }
-            }
 
             orgUser.Status = OrganizationUserStatusType.Confirmed;
             orgUser.Key = key;
@@ -1147,29 +463,6 @@ namespace Bit.Core.Services
                 EventType.OrganizationUser_UpdatedGroups);
         }
 
-        public async Task<OrganizationLicense> GenerateLicenseAsync(Guid organizationId, Guid installationId)
-        {
-            var organization = await GetOrgById(organizationId);
-            return await GenerateLicenseAsync(organization, installationId);
-        }
-
-        public async Task<OrganizationLicense> GenerateLicenseAsync(Organization organization, Guid installationId)
-        {
-            if(organization == null)
-            {
-                throw new NotFoundException();
-            }
-
-            var installation = await _installationRepository.GetByIdAsync(installationId);
-            if(installation == null || !installation.Enabled)
-            {
-                throw new BadRequestException("Invalid installation id");
-            }
-
-            var subInfo = await _paymentService.GetSubscriptionAsync(organization);
-            return new OrganizationLicense(organization, subInfo, installationId, _licensingService);
-        }
-
         public async Task ImportAsync(Guid organizationId,
             Guid importingUserId,
             IEnumerable<ImportedGroup> groups,
@@ -1181,11 +474,6 @@ namespace Bit.Core.Services
             if(organization == null)
             {
                 throw new NotFoundException();
-            }
-
-            if(!organization.UseDirectory)
-            {
-                throw new BadRequestException("Organization cannot use directory syncing.");
             }
 
             var newUsersSet = new HashSet<string>(newUsers?.Select(u => u.ExternalId) ?? new List<string>());
@@ -1254,34 +542,22 @@ namespace Bit.Core.Services
                 var existingUsersSet = new HashSet<string>(existingExternalUsersIdDict.Keys);
                 var usersToAdd = newUsersSet.Except(existingUsersSet).ToList();
 
-                var seatsAvailable = int.MaxValue;
-                var enoughSeatsAvailable = true;
-                if(organization.Seats.HasValue)
+                foreach(var user in newUsers)
                 {
-                    var userCount = await _organizationUserRepository.GetCountByOrganizationIdAsync(organizationId);
-                    seatsAvailable = organization.Seats.Value - userCount;
-                    enoughSeatsAvailable = seatsAvailable >= usersToAdd.Count;
-                }
-
-                if(enoughSeatsAvailable)
-                {
-                    foreach(var user in newUsers)
+                    if(!usersToAdd.Contains(user.ExternalId) || string.IsNullOrWhiteSpace(user.Email))
                     {
-                        if(!usersToAdd.Contains(user.ExternalId) || string.IsNullOrWhiteSpace(user.Email))
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
 
-                        try
-                        {
-                            var newUser = await InviteUserAsync(organizationId, importingUserId, user.Email,
-                                OrganizationUserType.User, false, user.ExternalId, new List<SelectionReadOnly>());
-                            existingExternalUsersIdDict.Add(newUser.ExternalId, newUser.Id);
-                        }
-                        catch(BadRequestException)
-                        {
-                            continue;
-                        }
+                    try
+                    {
+                        var newUser = await InviteUserAsync(organizationId, importingUserId, user.Email,
+                            OrganizationUserType.User, false, user.ExternalId, new List<SelectionReadOnly>());
+                        existingExternalUsersIdDict.Add(newUser.ExternalId, newUser.Id);
+                    }
+                    catch(BadRequestException)
+                    {
+                        continue;
                     }
                 }
             }
@@ -1290,11 +566,6 @@ namespace Bit.Core.Services
 
             if(groups?.Any() ?? false)
             {
-                if(!organization.UseGroups)
-                {
-                    throw new BadRequestException("Organization cannot use groups.");
-                }
-
                 var groupsDict = groups.ToDictionary(g => g.Group.ExternalId);
                 var existingGroups = await _groupRepository.GetManyByOrganizationIdAsync(organizationId);
                 var existingExternalGroups = existingGroups
@@ -1380,7 +651,6 @@ namespace Bit.Core.Services
         private async Task ReplaceAndUpdateCache(Organization org, EventType? orgEvent = null)
         {
             await _organizationRepository.ReplaceAsync(org);
-            await _applicationCacheService.UpsertOrganizationAbilityAsync(org);
 
             if(orgEvent.HasValue)
             {
@@ -1391,46 +661,6 @@ namespace Bit.Core.Services
         private async Task<Organization> GetOrgById(Guid id)
         {
             return await _organizationRepository.GetByIdAsync(id);
-        }
-
-        private void ValidateOrganizationUpgradeParameters(Models.StaticStore.Plan plan, OrganizationUpgrade upgrade)
-        {
-            if(!plan.MaxStorageGb.HasValue && upgrade.AdditionalStorageGb > 0)
-            {
-                throw new BadRequestException("Plan does not allow additional storage.");
-            }
-
-            if(upgrade.AdditionalStorageGb < 0)
-            {
-                throw new BadRequestException("You can't subtract storage!");
-            }
-
-            if(!plan.CanBuyPremiumAccessAddon && upgrade.PremiumAccessAddon)
-            {
-                throw new BadRequestException("This plan does not allow you to buy the premium access addon.");
-            }
-
-            if(plan.BaseSeats + upgrade.AdditionalSeats <= 0)
-            {
-                throw new BadRequestException("You do not have any seats!");
-            }
-
-            if(upgrade.AdditionalSeats < 0)
-            {
-                throw new BadRequestException("You can't subtract seats!");
-            }
-
-            if(!plan.CanBuyAdditionalSeats && upgrade.AdditionalSeats > 0)
-            {
-                throw new BadRequestException("Plan does not allow additional users.");
-            }
-
-            if(plan.CanBuyAdditionalSeats && plan.MaxAdditionalSeats.HasValue &&
-                upgrade.AdditionalSeats > plan.MaxAdditionalSeats.Value)
-            {
-                throw new BadRequestException($"Selected plan allows a maximum of " +
-                    $"{plan.MaxAdditionalSeats.GetValueOrDefault(0)} additional users.");
-            }
         }
     }
 }

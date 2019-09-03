@@ -36,7 +36,6 @@ namespace Bit.Api.Jobs
             {
                 new Tuple<Type, ITrigger>(typeof(AliveJob), everyTopOfTheHourTrigger),
                 new Tuple<Type, ITrigger>(typeof(ValidateUsersJob), everyTopOfTheSixthHourTrigger),
-                new Tuple<Type, ITrigger>(typeof(ValidateOrganizationsJob), everyTwelfthHourAndThirtyMinutesTrigger)
             };
 
             await base.StartAsync(cancellationToken);
@@ -46,7 +45,6 @@ namespace Bit.Api.Jobs
         {
             services.AddTransient<AliveJob>();
             services.AddTransient<ValidateUsersJob>();
-            services.AddTransient<ValidateOrganizationsJob>();
         }
     }
 }

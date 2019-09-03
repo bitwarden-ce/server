@@ -72,10 +72,6 @@ namespace Bit.Setup
             "`/etc/ssl` within the container.")]
         public string SslDiffieHellmanPath { get; set; }
 
-        [Description("Communicate with the Bitwarden push relay service (push.bitwarden.com) for mobile\n" +
-            "app live sync.")]
-        public bool PushNotifications { get; set; } = true;
-
         [Description("Use a docker volume (`mssql_data`) instead of a host-mapped volume for the persisted " +
             "database.\n" +
             "WARNING: Changing this value will cause you to lose access to the existing persisted database.\n" +
@@ -86,6 +82,12 @@ namespace Bit.Setup
             "client IP address.\n" +
             "Learn more: https://nginx.org/en/docs/http/ngx_http_realip_module.html")]
         public List<string> RealIps { get; set; }
+
+        [Description("Enable user registration on the instance.")]
+        public bool EnableUserRegistration { get; set; } = true;
+        
+        [Description("Instance admins email list.")]
+        public List<string> Admins { get; set; }
 
         [YamlIgnore]
         public string Domain

@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using Bit.Core.Models.Table;
 using Bit.Core;
 using Bit.Core.Utilities;
-using Bit.Core.Services;
 
 namespace Bit.Admin.Controllers
 {
@@ -17,25 +16,19 @@ namespace Bit.Admin.Controllers
     {
         private readonly IOrganizationRepository _organizationRepository;
         private readonly IOrganizationUserRepository _organizationUserRepository;
-        private readonly IPaymentService _paymentService;
-        private readonly IApplicationCacheService _applicationCacheService;
         private readonly GlobalSettings _globalSettings;
 
         public OrganizationsController(
             IOrganizationRepository organizationRepository,
             IOrganizationUserRepository organizationUserRepository,
-            IPaymentService paymentService,
-            IApplicationCacheService applicationCacheService,
             GlobalSettings globalSettings)
         {
             _organizationRepository = organizationRepository;
             _organizationUserRepository = organizationUserRepository;
-            _paymentService = paymentService;
-            _applicationCacheService = applicationCacheService;
             _globalSettings = globalSettings;
         }
 
-        public async Task<IActionResult> Index(string name = null, string userEmail = null, bool? paid = null,
+        public async Task<IActionResult> Index(string name = null, string userEmail = null,
             int page = 1, int count = 25)
         {
             if(page < 1)
@@ -49,17 +42,15 @@ namespace Bit.Admin.Controllers
             }
 
             var skip = (page - 1) * count;
-            var organizations = await _organizationRepository.SearchAsync(name, userEmail, paid, skip, count);
+            var organizations = await _organizationRepository.SearchAsync(name, userEmail, skip, count);
             return View(new OrganizationsModel
             {
                 Items = organizations as List<Organization>,
                 Name = string.IsNullOrWhiteSpace(name) ? null : name,
                 UserEmail = string.IsNullOrWhiteSpace(userEmail) ? null : userEmail,
-                Paid = paid,
                 Page = page,
                 Count = count,
-                Action = _globalSettings.SelfHosted ? "View" : "Edit",
-                SelfHosted = _globalSettings.SelfHosted
+                Action = "Edit",
             });
         }
 
@@ -75,7 +66,6 @@ namespace Bit.Admin.Controllers
             return View(new OrganizationViewModel(organization, users));
         }
 
-        [SelfHosted(NotSelfHostedOnly = true)]
         public async Task<IActionResult> Edit(Guid id)
         {
             var organization = await _organizationRepository.GetByIdAsync(id);
@@ -85,13 +75,11 @@ namespace Bit.Admin.Controllers
             }
 
             var users = await _organizationUserRepository.GetManyDetailsByOrganizationAsync(id);
-            var billingInfo = await _paymentService.GetBillingAsync(organization);
-            return View(new OrganizationEditModel(organization, users, billingInfo, _globalSettings));
+            return View(new OrganizationEditModel(organization, users, _globalSettings));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [SelfHosted(NotSelfHostedOnly = true)]
         public async Task<IActionResult> Edit(Guid id, OrganizationEditModel model)
         {
             var organization = await _organizationRepository.GetByIdAsync(id);
@@ -102,7 +90,6 @@ namespace Bit.Admin.Controllers
 
             model.ToOrganization(organization);
             await _organizationRepository.ReplaceAsync(organization);
-            await _applicationCacheService.UpsertOrganizationAbilityAsync(organization);
             return RedirectToAction("Edit", new { id });
         }
 
@@ -114,7 +101,6 @@ namespace Bit.Admin.Controllers
             if(organization != null)
             {
                 await _organizationRepository.DeleteAsync(organization);
-                await _applicationCacheService.DeleteOrganizationAbilityAsync(organization.Id);
             }
 
             return RedirectToAction("Index");

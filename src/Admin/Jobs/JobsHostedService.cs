@@ -27,13 +27,7 @@ namespace Bit.Admin.Jobs
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
-            var timeZone = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?
-                TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time") :
-                TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
-            if(_globalSettings.SelfHosted)
-            {
-                timeZone = TimeZoneInfo.Utc;
-            }
+            var timeZone = TimeZoneInfo.Local;
 
             var everyTopOfTheHourTrigger = TriggerBuilder.Create()
                 .StartNow()

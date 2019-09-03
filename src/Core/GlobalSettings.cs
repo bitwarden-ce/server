@@ -4,7 +4,6 @@ namespace Bit.Core
 {
     public class GlobalSettings
     {
-        public bool SelfHosted { get; set; }
         public virtual string KnownProxies { get; set; }
         public virtual string SiteName { get; set; }
         public virtual string StripeApiKey { get; set; }
@@ -35,8 +34,6 @@ namespace Bit.Core
         public virtual NotificationHubSettings NotificationHub { get; set; } = new NotificationHubSettings();
         public virtual YubicoSettings Yubico { get; set; } = new YubicoSettings();
         public virtual DuoSettings Duo { get; set; } = new DuoSettings();
-        public virtual BraintreeSettings Braintree { get; set; } = new BraintreeSettings();
-        public virtual BitPaySettings BitPay { get; set; } = new BitPaySettings();
         public virtual AmazonSettings Amazon { get; set; } = new AmazonSettings();
         public virtual ServiceBusSettings ServiceBus { get; set; } = new ServiceBusSettings();
 
@@ -185,26 +182,10 @@ namespace Bit.Core
             public string AKey { get; set; }
         }
 
-        public class BraintreeSettings
-        {
-            public bool Production { get; set; }
-            public string MerchantId { get; set; }
-            public string PublicKey { get; set; }
-            public string PrivateKey { get; set; }
-        }
-
-        public class BitPaySettings
-        {
-            public bool Production { get; set; }
-            public string Base58Secret { get; set; }
-            public string NotificationUrl { get; set; }
-        }
-
         public class InstallationSettings
         {
             public Guid Id { get; set; }
             public string Key { get; set; }
-            public string IdentityUri { get; set; }
         }
 
         public class AmazonSettings

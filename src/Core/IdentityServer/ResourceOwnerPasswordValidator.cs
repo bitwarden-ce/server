@@ -13,7 +13,6 @@ using Bit.Core.Services;
 using System.Linq;
 using Bit.Core.Models;
 using Bit.Core.Identity;
-using Bit.Core.Models.Data;
 using Bit.Core.Utilities;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
@@ -30,7 +29,6 @@ namespace Bit.Core.IdentityServer
         private readonly IOrganizationDuoWebTokenProvider _organizationDuoWebTokenProvider;
         private readonly IOrganizationRepository _organizationRepository;
         private readonly IOrganizationUserRepository _organizationUserRepository;
-        private readonly IApplicationCacheService _applicationCacheService;
         private readonly IMailService _mailService;
         private readonly CurrentContext _currentContext;
         private readonly GlobalSettings _globalSettings;
@@ -44,7 +42,6 @@ namespace Bit.Core.IdentityServer
             IOrganizationDuoWebTokenProvider organizationDuoWebTokenProvider,
             IOrganizationRepository organizationRepository,
             IOrganizationUserRepository organizationUserRepository,
-            IApplicationCacheService applicationCacheService,
             IMailService mailService,
             CurrentContext currentContext,
             GlobalSettings globalSettings)
@@ -57,7 +54,6 @@ namespace Bit.Core.IdentityServer
             _organizationDuoWebTokenProvider = organizationDuoWebTokenProvider;
             _organizationRepository = organizationRepository;
             _organizationUserRepository = organizationUserRepository;
-            _applicationCacheService = applicationCacheService;
             _mailService = mailService;
             _currentContext = currentContext;
             _globalSettings = globalSettings;
@@ -173,10 +169,7 @@ namespace Bit.Core.IdentityServer
             {
                 foreach(var p in user.GetTwoFactorProviders())
                 {
-                    if(await _userService.TwoFactorProviderIsEnabledAsync(p.Key, user))
-                    {
-                        enabledProviders.Add(p);
-                    }
+                    enabledProviders.Add(p);
                 }
             }
 
@@ -236,23 +229,12 @@ namespace Bit.Core.IdentityServer
                 .ToList();
             if(orgs.Any())
             {
-                var orgAbilities = await _applicationCacheService.GetOrganizationAbilitiesAsync();
-                var twoFactorOrgs = orgs.Where(o => OrgUsing2fa(orgAbilities, o.Id));
-                if(twoFactorOrgs.Any())
-                {
-                    var userOrgs = await _organizationRepository.GetManyByUserIdAsync(user.Id);
-                    firstEnabledOrg = userOrgs.FirstOrDefault(
-                        o => orgs.Any(om => om.Id == o.Id) && o.TwoFactorIsEnabled());
-                }
+                var userOrgs = await _organizationRepository.GetManyByUserIdAsync(user.Id);
+                firstEnabledOrg = userOrgs.FirstOrDefault(
+                    o => orgs.Any(om => om.Id == o.Id) && o.TwoFactorIsEnabled());
             }
 
             return new Tuple<bool, Organization>(individualRequired || firstEnabledOrg != null, firstEnabledOrg);
-        }
-
-        private bool OrgUsing2fa(IDictionary<Guid, OrganizationAbility> orgAbilities, Guid orgId)
-        {
-            return orgAbilities != null && orgAbilities.ContainsKey(orgId) &&
-                orgAbilities[orgId].Enabled && orgAbilities[orgId].Using2fa;
         }
 
         private Device GetDeviceFromRequest(ResourceOwnerPasswordValidationContext context)
@@ -288,8 +270,7 @@ namespace Bit.Core.IdentityServer
                 case TwoFactorProviderType.YubiKey:
                 case TwoFactorProviderType.U2f:
                 case TwoFactorProviderType.Remember:
-                    if(type != TwoFactorProviderType.Remember &&
-                        !(await _userService.TwoFactorProviderIsEnabledAsync(type, user)))
+                    if(type != TwoFactorProviderType.Remember)
                     {
                         return false;
                     }
@@ -316,11 +297,6 @@ namespace Bit.Core.IdentityServer
                 case TwoFactorProviderType.U2f:
                 case TwoFactorProviderType.Email:
                 case TwoFactorProviderType.YubiKey:
-                    if(!(await _userService.TwoFactorProviderIsEnabledAsync(type, user)))
-                    {
-                        return null;
-                    }
-
                     var token = await _userManager.GenerateTwoFactorTokenAsync(user,
                         CoreHelpers.CustomProviderName(type));
                     if(type == TwoFactorProviderType.Duo)

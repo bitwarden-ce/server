@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -128,18 +128,6 @@ namespace Bit.Core.Repositories.PostgreSql
                 await connection.ExecuteAsync(
                     $"user_delete_by_id",
                     ToParam(new { Id = user.Id }),
-                    commandType: CommandType.StoredProcedure,
-                    commandTimeout: 180);
-            }
-        }
-
-        public async Task UpdateStorageAsync(Guid id)
-        {
-            using(var connection = new NpgsqlConnection(ConnectionString))
-            {
-                await connection.ExecuteAsync(
-                    "user_update_storage",
-                    ToParam(new { Id = id }),
                     commandType: CommandType.StoredProcedure,
                     commandTimeout: 180);
             }

@@ -149,23 +149,6 @@ CREATE PROCEDURE [dbo].[Organization_Create]
     @BusinessAddress3 NVARCHAR(50),
     @BusinessCountry VARCHAR(2),
     @BusinessTaxNumber NVARCHAR(30),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseTotp BIT,
-    @SelfHost BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -182,23 +165,6 @@ BEGIN
         [BusinessAddress3],
         [BusinessCountry],
         [BusinessTaxNumber],
-        [BillingEmail],
-        [Plan],
-        [PlanType],
-        [Seats],
-        [MaxCollections],
-        [UseGroups],
-        [UseDirectory],
-        [UseTotp],
-        [SelfHost],
-        [Storage],
-        [MaxStorageGb],
-        [Gateway],
-        [GatewayCustomerId],
-        [GatewaySubscriptionId],
-        [Enabled],
-        [LicenseKey],
-        [ExpirationDate],
         [CreationDate],
         [RevisionDate]
     )
@@ -212,23 +178,6 @@ BEGIN
         @BusinessAddress3,
         @BusinessCountry,
         @BusinessTaxNumber,
-        @BillingEmail,
-        @Plan,
-        @PlanType,
-        @Seats,
-        @MaxCollections,
-        @UseGroups,
-        @UseDirectory,
-        @UseTotp,
-        @SelfHost,
-        @Storage,
-        @MaxStorageGb,
-        @Gateway,
-        @GatewayCustomerId,
-        @GatewaySubscriptionId,
-        @Enabled,
-        @LicenseKey,
-        @ExpirationDate,
         @CreationDate,
         @RevisionDate
     )
@@ -250,23 +199,6 @@ CREATE PROCEDURE [dbo].[Organization_Update]
     @BusinessAddress3 NVARCHAR(50),
     @BusinessCountry VARCHAR(2),
     @BusinessTaxNumber NVARCHAR(30),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseTotp BIT,
-    @SelfHost BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 
@@ -284,23 +216,6 @@ BEGIN
         [BusinessAddress3] = @BusinessAddress3,
         [BusinessCountry] = @BusinessCountry,
         [BusinessTaxNumber] = @BusinessTaxNumber,
-        [BillingEmail] = @BillingEmail,
-        [Plan] = @Plan,
-        [PlanType] = @PlanType,
-        [Seats] = @Seats,
-        [MaxCollections] = @MaxCollections,
-        [UseGroups] = @UseGroups,
-        [UseDirectory] = @UseDirectory,
-        [UseTotp] = @UseTotp,
-        [SelfHost] = @SelfHost,
-        [Storage] = @Storage,
-        [MaxStorageGb] = @MaxStorageGb,
-        [Gateway] = @Gateway,
-        [GatewayCustomerId] = @GatewayCustomerId,
-        [GatewaySubscriptionId] = @GatewaySubscriptionId,
-        [Enabled] = @Enabled,
-        [LicenseKey] = @LicenseKey,
-        [ExpirationDate] = @ExpirationDate,
         [CreationDate] = @CreationDate,
         [RevisionDate] = @RevisionDate
     WHERE
@@ -339,7 +254,6 @@ BEGIN
     END
 
     -- Cleanup user
-    EXEC [dbo].[User_UpdateStorage] @UserId
     EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
 END
 GO
@@ -378,18 +292,10 @@ BEGIN
 
     IF @OrganizationId IS NOT NULL
     BEGIN
-        IF @Attachments = 1
-        BEGIN
-            EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
-        END
         EXEC [dbo].[User_BumpAccountRevisionDateByOrganizationId] @OrganizationId
     END
     ELSE IF @UserId IS NOT NULL
     BEGIN
-        IF @Attachments = 1
-        BEGIN
-            EXEC [dbo].[User_UpdateStorage] @UserId
-        END
         EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
     END
 END

@@ -1,0 +1,29 @@
+@model BypassLoginModel
+@{
+    ViewData["title"] = "Login";
+}
+
+<div class="row justify-content-md-center">
+    <div class="col col-lg-6 col-md-8">
+        @if(!string.IsNullOrWhiteSpace(Model.Error))
+         {
+             <div class="alert alert-danger" role="alert">@Model.Error</div>
+         }
+        <div class="card">
+            <div class="card-body">
+                <p>Please enter your email address below to log in.</p>
+                <form asp-action="Bypass" method="post">
+                    <input type="hidden" asp-for="ReturnUrl"/>
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="Email" class="sr-only">Email Address</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="ex. john@example.com"
+                               required autofocus/>
+                        <span asp-validation-for="Email" class="invalid-feedback"></span>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

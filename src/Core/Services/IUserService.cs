@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Bit.Core.Models.Table;
 using System.Security.Claims;
 using Bit.Core.Enums;
-using Bit.Core.Models;
 using Bit.Core.Models.Business;
 
 namespace Bit.Core.Services
@@ -43,23 +42,7 @@ namespace Bit.Core.Services
         Task<IdentityResult> DeleteAsync(User user);
         Task<IdentityResult> DeleteAsync(User user, string token);
         Task SendDeleteConfirmationAsync(string email);
-        Task<Tuple<bool, string>> SignUpPremiumAsync(User user, string paymentToken,
-            PaymentMethodType paymentMethodType, short additionalStorageGb, UserLicense license);
         Task IapCheckAsync(User user, PaymentMethodType paymentMethodType);
-        Task UpdateLicenseAsync(User user, UserLicense license);
-        Task<string> AdjustStorageAsync(User user, short storageAdjustmentGb);
-        Task ReplacePaymentMethodAsync(User user, string paymentToken, PaymentMethodType paymentMethodType);
-        Task CancelPremiumAsync(User user, bool? endOfPeriod = null);
-        Task ReinstatePremiumAsync(User user);
-        Task EnablePremiumAsync(Guid userId, DateTime? expirationDate);
-        Task EnablePremiumAsync(User user, DateTime? expirationDate);
-        Task DisablePremiumAsync(Guid userId, DateTime? expirationDate);
-        Task DisablePremiumAsync(User user, DateTime? expirationDate);
-        Task UpdatePremiumExpirationAsync(Guid userId, DateTime? expirationDate);
-        Task<UserLicense> GenerateLicenseAsync(User user, SubscriptionInfo subscriptionInfo = null);
         Task<bool> CheckPasswordAsync(User user, string password);
-        Task<bool> CanAccessPremium(ITwoFactorProvidersUser user);
-        Task<bool> TwoFactorIsEnabledAsync(ITwoFactorProvidersUser user);
-        Task<bool> TwoFactorProviderIsEnabledAsync(TwoFactorProviderType provider, ITwoFactorProvidersUser user);
     }
 }

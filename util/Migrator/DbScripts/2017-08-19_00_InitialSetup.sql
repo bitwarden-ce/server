@@ -243,23 +243,6 @@ CREATE TABLE [dbo].[Organization] (
     [Id]                    UNIQUEIDENTIFIER NOT NULL,
     [Name]                  NVARCHAR (50)    NOT NULL,
     [BusinessName]          NVARCHAR (50)    NULL,
-    [BillingEmail]          NVARCHAR (50)    NOT NULL,
-    [Plan]                  NVARCHAR (50)    NOT NULL,
-    [PlanType]              TINYINT          NOT NULL,
-    [Seats]                 SMALLINT         NULL,
-    [MaxCollections]        SMALLINT         NULL,
-    [UseGroups]             BIT              NOT NULL,
-    [UseDirectory]          BIT              NOT NULL,
-    [UseTotp]               BIT              NOT NULL,
-    [SelfHost]              BIT              NOT NULL,
-    [Storage]               BIGINT           NULL,
-    [MaxStorageGb]          SMALLINT         NULL,
-    [Gateway]               TINYINT          NULL,
-    [GatewayCustomerId]     VARCHAR (50)     NULL,
-    [GatewaySubscriptionId] VARCHAR (50)     NULL,
-    [Enabled]               BIT              NOT NULL,
-    [LicenseKey]            VARCHAR (100)    NULL,
-    [ExpirationDate]        DATETIME2 (7)    NULL,
     [CreationDate]          DATETIME2 (7)    NOT NULL,
     [RevisionDate]          DATETIME2 (7)    NOT NULL,
     CONSTRAINT [PK_Organization] PRIMARY KEY CLUSTERED ([Id] ASC)
@@ -326,14 +309,6 @@ CREATE TABLE [dbo].[User] (
     [Key]                             VARCHAR (MAX)    NULL,
     [PublicKey]                       VARCHAR (MAX)    NULL,
     [PrivateKey]                      VARCHAR (MAX)    NULL,
-    [Premium]                         BIT              NOT NULL,
-    [PremiumExpirationDate]           DATETIME2 (7)    NULL,
-    [Storage]                         BIGINT           NULL,
-    [MaxStorageGb]                    SMALLINT         NULL,
-    [Gateway]                         TINYINT          NULL,
-    [GatewayCustomerId]               VARCHAR (50)     NULL,
-    [GatewaySubscriptionId]           VARCHAR (50)     NULL,
-    [LicenseKey]                      VARCHAR (100)    NULL,
     [CreationDate]                    DATETIME2 (7)    NOT NULL,
     [RevisionDate]                    DATETIME2 (7)    NOT NULL,
     CONSTRAINT [PK_User] PRIMARY KEY CLUSTERED ([Id] ASC)
@@ -590,13 +565,6 @@ SELECT
     OU.[UserId],
     OU.[OrganizationId],
     O.[Name],
-    O.[Enabled],
-    O.[UseGroups],
-    O.[UseDirectory],
-    O.[UseTotp],
-    O.[Seats],
-    O.[MaxCollections],
-    O.[MaxStorageGb],
     OU.[Key],
     OU.[Status],
     OU.[Type]
@@ -712,11 +680,7 @@ SELECT
     CASE 
         WHEN C.[UserId] IS NOT NULL OR OU.[AccessAll] = 1 OR CU.[ReadOnly] = 0 OR G.[AccessAll] = 1 OR CG.[ReadOnly] = 0 THEN 1
         ELSE 0
-    END [Edit],
-    CASE 
-        WHEN C.[UserId] IS NULL AND O.[UseTotp] = 1 THEN 1
-        ELSE 0
-    END [OrganizationUseTotp]
+    END [Edit]
 FROM
     [dbo].[CipherDetails](@UserId) C
 LEFT JOIN
@@ -738,7 +702,6 @@ WHERE
     OR (
         C.[UserId] IS NULL
         AND OU.[Status] = 2 -- 2 = Confirmed
-        AND O.[Enabled] = 1
         AND (
             OU.[AccessAll] = 1
             OR CU.[CollectionId] IS NOT NULL
@@ -825,7 +788,6 @@ BEGIN
                 OR (
                     C.[UserId] IS NULL
                     AND OU.[Status] = 2 -- 2 = Confirmed
-                    AND O.[Enabled] = 1
                     AND (
                         OU.[AccessAll] = 1
                         OR CU.[CollectionId] IS NOT NULL
@@ -938,7 +900,6 @@ BEGIN
         [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[CollectionId] = CC.[CollectionId] AND CG.[GroupId] = GU.[GroupId]
     WHERE
         OU.[Status] = 2 -- 2 = Confirmed
-        AND O.[Enabled] = 1
         AND (
             OU.[AccessAll] = 1
             OR CU.[CollectionId] IS NOT NULL
@@ -1108,7 +1069,6 @@ BEGIN
     WHERE
         OU.[UserId] = @UserId
         AND OU.[Status] = 2 -- 2 = Confirmed
-        AND O.[Enabled] = 1
         AND (
             OU.[AccessAll] = 1
             OR CU.[CollectionId] IS NOT NULL
@@ -2211,23 +2171,6 @@ CREATE PROCEDURE [dbo].[Organization_Create]
     @Id UNIQUEIDENTIFIER,
     @Name NVARCHAR(50),
     @BusinessName NVARCHAR(50),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseTotp BIT,
-    @SelfHost BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -2239,23 +2182,6 @@ BEGIN
         [Id],
         [Name],
         [BusinessName],
-        [BillingEmail],
-        [Plan],
-        [PlanType],
-        [Seats],
-        [MaxCollections],
-        [UseGroups],
-        [UseDirectory],
-        [UseTotp],
-        [SelfHost],
-        [Storage],
-        [MaxStorageGb],
-        [Gateway],
-        [GatewayCustomerId],
-        [GatewaySubscriptionId],
-        [Enabled],
-        [LicenseKey],
-        [ExpirationDate],
         [CreationDate],
         [RevisionDate]
     )
@@ -2264,23 +2190,6 @@ BEGIN
         @Id,
         @Name,
         @BusinessName,
-        @BillingEmail,
-        @Plan,
-        @PlanType,
-        @Seats,
-        @MaxCollections,
-        @UseGroups,
-        @UseDirectory,
-        @UseTotp,
-        @SelfHost,
-        @Storage,
-        @MaxStorageGb,
-        @Gateway,
-        @GatewayCustomerId,
-        @GatewaySubscriptionId,
-        @Enabled,
-        @LicenseKey,
-        @ExpirationDate,
         @CreationDate,
         @RevisionDate
     )
@@ -2348,23 +2257,6 @@ CREATE PROCEDURE [dbo].[Organization_Update]
     @Id UNIQUEIDENTIFIER,
     @Name NVARCHAR(50),
     @BusinessName NVARCHAR(50),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseTotp BIT,
-    @SelfHost BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 
@@ -2377,68 +2269,8 @@ BEGIN
     SET
         [Name] = @Name,
         [BusinessName] = @BusinessName,
-        [BillingEmail] = @BillingEmail,
-        [Plan] = @Plan,
-        [PlanType] = @PlanType,
-        [Seats] = @Seats,
-        [MaxCollections] = @MaxCollections,
-        [UseGroups] = @UseGroups,
-        [UseDirectory] = @UseDirectory,
-        [UseTotp] = @UseTotp,
-        [SelfHost] = @SelfHost,
-        [Storage] = @Storage,
-        [MaxStorageGb] = @MaxStorageGb,
-        [Gateway] = @Gateway,
-        [GatewayCustomerId] = @GatewayCustomerId,
-        [GatewaySubscriptionId] = @GatewaySubscriptionId,
-        [Enabled] = @Enabled,
-        [LicenseKey] = @LicenseKey,
-        [ExpirationDate] = @ExpirationDate,
         [CreationDate] = @CreationDate,
         [RevisionDate] = @RevisionDate
-    WHERE
-        [Id] = @Id
-END
-GO
-PRINT N'Creating [dbo].[Organization_UpdateStorage]...';
-
-
-GO
-CREATE PROCEDURE [dbo].[Organization_UpdateStorage]
-    @Id UNIQUEIDENTIFIER
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @Storage BIGINT
-
-    ;WITH [CTE] AS (
-        SELECT
-            [Id],
-            (
-                SELECT
-                    SUM(CAST(JSON_VALUE(value,'$.Size') AS BIGINT))
-                FROM
-                    OPENJSON([Attachments])
-            ) [Size]
-        FROM
-            [dbo].[Cipher]
-    )
-    SELECT
-        @Storage = SUM([CTE].[Size])
-    FROM
-        [dbo].[Cipher] C
-    LEFT JOIN
-        [CTE] ON C.[Id] = [CTE].[Id]
-    WHERE
-        C.[OrganizationId] = @Id
-        AND C.[Attachments] IS NOT NULL
-
-    UPDATE
-        [dbo].[Organization]
-    SET
-        [Storage] = @Storage,
-        [RevisionDate] = GETUTCDATE()
     WHERE
         [Id] = @Id
 END
@@ -2684,7 +2516,6 @@ BEGIN
     WHERE
         OU.[UserId] = @UserId
         AND OU.[Type] < 2 -- Owner or Admin
-        AND O.[PlanType] = 0 -- Free
 END
 GO
 PRINT N'Creating [dbo].[OrganizationUser_ReadCountByOrganizationId]...';
@@ -2941,14 +2772,6 @@ CREATE PROCEDURE [dbo].[User_Create]
     @Key NVARCHAR(MAX),
     @PublicKey NVARCHAR(MAX),
     @PrivateKey NVARCHAR(MAX),
-    @Premium BIT,
-    @PremiumExpirationDate DATETIME2(7),
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @LicenseKey VARCHAR(100),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -2973,14 +2796,6 @@ BEGIN
         [Key],
         [PublicKey],
         [PrivateKey],
-        [Premium],
-        [PremiumExpirationDate],
-        [Storage],
-        [MaxStorageGb],
-        [Gateway],
-        [GatewayCustomerId],
-        [GatewaySubscriptionId],
-        [LicenseKey],
         [CreationDate],
         [RevisionDate]
     )
@@ -3002,14 +2817,6 @@ BEGIN
         @Key,
         @PublicKey,
         @PrivateKey,
-        @Premium,
-        @PremiumExpirationDate,
-        @Storage,
-        @MaxStorageGb,
-        @Gateway,
-        @GatewayCustomerId,
-        @GatewaySubscriptionId,
-        @LicenseKey,
         @CreationDate,
         @RevisionDate
     )
@@ -3191,14 +2998,6 @@ CREATE PROCEDURE [dbo].[User_Update]
     @Key NVARCHAR(MAX),
     @PublicKey NVARCHAR(MAX),
     @PrivateKey NVARCHAR(MAX),
-    @Premium BIT,
-    @PremiumExpirationDate DATETIME2(7),
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @LicenseKey VARCHAR(100),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -3223,14 +3022,6 @@ BEGIN
         [Key] = @Key,
         [PublicKey] = @PublicKey,
         [PrivateKey] = @PrivateKey,
-        [Premium] = @Premium,
-        [PremiumExpirationDate] = @PremiumExpirationDate,
-        [Storage] = @Storage,
-        [MaxStorageGb] = @MaxStorageGb,
-        [Gateway] = @Gateway,
-        [GatewayCustomerId] = @GatewayCustomerId,
-        [GatewaySubscriptionId] = @GatewaySubscriptionId,
-        [LicenseKey] = @LicenseKey,
         [CreationDate] = @CreationDate,
         [RevisionDate] = @RevisionDate
     WHERE
@@ -3259,49 +3050,6 @@ BEGIN
         [PrivateKey] = @PrivateKey,
         [RevisionDate] = @RevisionDate,
         [AccountRevisionDate] = @RevisionDate
-    WHERE
-        [Id] = @Id
-END
-GO
-PRINT N'Creating [dbo].[User_UpdateStorage]...';
-
-
-GO
-CREATE PROCEDURE [dbo].[User_UpdateStorage]
-    @Id UNIQUEIDENTIFIER
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @Storage BIGINT
-
-    ;WITH [CTE] AS (
-        SELECT
-            [Id],
-            (
-                SELECT
-                    SUM(CAST(JSON_VALUE(value,'$.Size') AS BIGINT))
-                FROM
-                    OPENJSON([Attachments])
-            ) [Size]
-        FROM
-            [dbo].[Cipher]
-    )
-    SELECT
-        @Storage = SUM([CTE].[Size])
-    FROM
-        [dbo].[Cipher] C
-    LEFT JOIN
-        [CTE] ON C.[Id] = [CTE].[Id]
-    WHERE
-        C.[UserId] = @Id
-        AND C.[Attachments] IS NOT NULL
-
-    UPDATE
-        [dbo].[User]
-    SET
-        [Storage] = @Storage,
-        [RevisionDate] = GETUTCDATE()
     WHERE
         [Id] = @Id
 END
@@ -3414,7 +3162,6 @@ BEGIN
     OPEN [OrgCursor]
     FETCH NEXT FROM [OrgCursor] INTO @OrgId
     WHILE @@FETCH_STATUS = 0 BEGIN
-        EXEC [dbo].[Organization_UpdateStorage] @OrgId
         EXEC [dbo].[User_BumpAccountRevisionDateByOrganizationId] @OrgId
         FETCH NEXT FROM [OrgCursor] INTO @OrgId
     END
@@ -3431,10 +3178,6 @@ BEGIN
         [UserId] IS NOT NULL
         AND [Attachments] = 1
 
-    IF @UserCiphersWithStorageCount > 0
-    BEGIN
-        EXEC [dbo].[User_UpdateStorage] @UserId
-    END
     EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
 
     DROP TABLE #Temp
@@ -3473,12 +3216,10 @@ BEGIN
 
     IF @OrganizationId IS NOT NULL
     BEGIN
-        EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
         EXEC [dbo].[User_BumpAccountRevisionDateByOrganizationId] @OrganizationId
     END
     ELSE IF @UserId IS NOT NULL
     BEGIN
-        EXEC [dbo].[User_UpdateStorage] @UserId
         EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
     END
 END
@@ -3756,7 +3497,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrganizationId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1 
@@ -3804,8 +3544,7 @@ CREATE PROCEDURE [dbo].[CipherDetails_Create]
     @RevisionDate DATETIME2(7),
     @FolderId UNIQUEIDENTIFIER,
     @Favorite BIT,
-    @Edit BIT, -- not used
-    @OrganizationUseTotp BIT -- not used
+    @Edit BIT -- not used
 AS
 BEGIN
     SET NOCOUNT ON
@@ -3865,8 +3604,7 @@ CREATE PROCEDURE [dbo].[CipherDetails_Update]
     @RevisionDate DATETIME2(7),
     @FolderId UNIQUEIDENTIFIER,
     @Favorite BIT,
-    @Edit BIT, -- not used
-    @OrganizationUseTotp BIT -- not used
+    @Edit BIT -- not used
 AS
 BEGIN
     SET NOCOUNT ON
@@ -4008,7 +3746,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[CollectionId] = C.[Id] AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrgId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1

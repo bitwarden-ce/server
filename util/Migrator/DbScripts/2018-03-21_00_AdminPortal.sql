@@ -35,7 +35,6 @@ GO
 CREATE PROCEDURE [dbo].[Organization_Search]
     @Name NVARCHAR(50),
     @UserEmail NVARCHAR(50),
-    @Paid BIT,
     @Skip INT = 0,
     @Take INT = 25
 WITH RECOMPILE
@@ -57,14 +56,6 @@ BEGIN
         WHERE
             (@Name IS NULL OR O.[Name] LIKE @NameLikeSearch)
             AND (@UserEmail IS NULL OR U.[Email] = @UserEmail)
-            AND
-            (
-                @Paid IS NULL OR
-                (
-                    (@Paid = 1 AND O.[GatewaySubscriptionId] IS NOT NULL) OR
-                    (@Paid = 0 AND O.[GatewaySubscriptionId] IS NULL)
-                )
-            )
         ORDER BY O.[CreationDate] DESC
         OFFSET @Skip ROWS
         FETCH NEXT @Take ROWS ONLY
@@ -77,14 +68,6 @@ BEGIN
             [dbo].[OrganizationView] O
         WHERE
             (@Name IS NULL OR O.[Name] LIKE @NameLikeSearch)
-            AND
-            (
-                @Paid IS NULL OR
-                (
-                    (@Paid = 1 AND O.[GatewaySubscriptionId] IS NOT NULL) OR
-                    (@Paid = 0 AND O.[GatewaySubscriptionId] IS NULL)
-                )
-            )
         ORDER BY O.[CreationDate] DESC
         OFFSET @Skip ROWS
         FETCH NEXT @Take ROWS ONLY
@@ -138,95 +121,5 @@ BEGIN
         [Id] = @Id
 
     EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
-END
-GO
-
-IF OBJECT_ID('[dbo].[Organization_UpdateStorage]') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[Organization_UpdateStorage]
-END
-GO
-
-CREATE PROCEDURE [dbo].[Organization_UpdateStorage]
-    @Id UNIQUEIDENTIFIER
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @Storage BIGINT
-
-    ;WITH [CTE] AS (
-        SELECT
-            [Id],
-            (
-                SELECT
-                    SUM(CAST(JSON_VALUE(value,'$.Size') AS BIGINT))
-                FROM
-                    OPENJSON([Attachments])
-            ) [Size]
-        FROM
-            [dbo].[Cipher]
-    )
-    SELECT
-        @Storage = SUM([CTE].[Size])
-    FROM
-        [dbo].[Cipher] C
-    LEFT JOIN
-        [CTE] ON C.[Id] = [CTE].[Id]
-    WHERE
-        C.[OrganizationId] = @Id
-
-    UPDATE
-        [dbo].[Organization]
-    SET
-        [Storage] = @Storage,
-        [RevisionDate] = GETUTCDATE()
-    WHERE
-        [Id] = @Id
-END
-GO
-
-IF OBJECT_ID('[dbo].[User_UpdateStorage]') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[User_UpdateStorage]
-END
-GO
-
-CREATE PROCEDURE [dbo].[User_UpdateStorage]
-    @Id UNIQUEIDENTIFIER
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @Storage BIGINT
-
-    ;WITH [CTE] AS (
-        SELECT
-            [Id],
-            (
-                SELECT
-                    SUM(CAST(JSON_VALUE(value,'$.Size') AS BIGINT))
-                FROM
-                    OPENJSON([Attachments])
-            ) [Size]
-        FROM
-            [dbo].[Cipher]
-    )
-    SELECT
-        @Storage = SUM([CTE].[Size])
-    FROM
-        [dbo].[Cipher] C
-    LEFT JOIN
-        [CTE] ON C.[Id] = [CTE].[Id]
-    WHERE
-        C.[UserId] = @Id
-
-    UPDATE
-        [dbo].[User]
-    SET
-        [Storage] = @Storage,
-        [RevisionDate] = GETUTCDATE()
-    WHERE
-        [Id] = @Id
 END
 GO

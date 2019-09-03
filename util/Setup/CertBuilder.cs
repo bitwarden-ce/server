@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Bit.Core.Utilities;
 
 namespace Bit.Setup
 {
@@ -26,7 +27,7 @@ namespace Bit.Setup
 
             _context.Config.Ssl = _context.Config.SslManagedLetsEncrypt;
 
-            if(!_context.Config.Ssl)
+            if(!_context.Config.Ssl && _context.Install.Ssl == null)
             {
                 _context.Config.Ssl = Helpers.ReadQuestion("Do you have a SSL certificate to use?");
                 if(_context.Config.Ssl)
@@ -67,7 +68,7 @@ namespace Bit.Setup
             }
 
             Helpers.WriteLine(_context, "Generating key for IdentityServer.");
-            _context.Install.IdentityCertPassword = Helpers.SecureRandomString(32, alpha: true, numeric: true);
+            _context.Install.IdentityCertPassword = CoreHelpers.SecureRandomString(32, alpha: true, numeric: true);
             Directory.CreateDirectory("/bitwarden/identity/");
             Helpers.Exec("openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout identity.key " +
                 "-out identity.crt -subj \"/CN=Bitwarden IdentityServer\" -days 10950");

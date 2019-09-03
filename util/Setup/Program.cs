@@ -1,10 +1,9 @@
 ﻿using Bit.Migrator;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Globalization;
-using System.Net.Http;
+using Bit.Core.Utilities;
 
 namespace Bit.Setup
 {
@@ -76,15 +75,15 @@ namespace Bit.Setup
                 _context.Install.Domain = _context.Parameters["domain"].ToLowerInvariant();
             }
 
-            if(_context.Stub)
+            if (_context.Parameters.ContainsKey("ssl"))
             {
-                _context.Install.InstallationId = Guid.Empty;
-                _context.Install.InstallationKey = "SECRET_INSTALLATION_KEY";
+                _context.Config.Ssl = _context.Parameters["ssl"] == "true" ||
+                                      _context.Parameters["ssl"] == "1";
+                _context.Install.Ssl = _context.Config.Ssl;
             }
-            else if(!ValidateInstallation())
-            {
-                return;
-            }
+
+            _context.Install.InstallationId = CoreHelpers.GenerateComb();
+            _context.Install.InstallationKey = CoreHelpers.SecureRandomString(20);
 
             var certBuilder = new CertBuilder(_context);
             certBuilder.BuildForInstall();
@@ -191,54 +190,6 @@ namespace Bit.Setup
                     return;
                 }
                 throw e;
-            }
-        }
-
-        private static bool ValidateInstallation()
-        {
-            var installationId = Helpers.ReadInput("Enter your installation id (get at https://bitwarden.com/host)");
-            if(!Guid.TryParse(installationId.Trim(), out var installationidGuid))
-            {
-                Console.WriteLine("Invalid installation id.");
-                return false;
-            }
-
-            _context.Install.InstallationId = installationidGuid;
-            _context.Install.InstallationKey = Helpers.ReadInput("Enter your installation key");
-
-            try
-            {
-                var response = new HttpClient().GetAsync("https://api.bitwarden.com/installations/" +
-                    _context.Install.InstallationId).GetAwaiter().GetResult();
-
-                if(!response.IsSuccessStatusCode)
-                {
-                    if(response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                    {
-                        Console.WriteLine("Invalid installation id.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Unable to validate installation id.");
-                    }
-
-                    return false;
-                }
-
-                var resultString = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                var result = JsonConvert.DeserializeObject<dynamic>(resultString);
-                if(!(bool)result.Enabled)
-                {
-                    Console.WriteLine("Installation id has been disabled.");
-                    return false;
-                }
-
-                return true;
-            }
-            catch
-            {
-                Console.WriteLine("Unable to validate installation id. Problem contacting Bitwarden server.");
-                return false;
             }
         }
 

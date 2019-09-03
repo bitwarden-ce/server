@@ -19,7 +19,6 @@ BEGIN
     WHERE
         OU.[UserId] = @UserId
         AND OU.[Type] < 2 -- Owner or Admin
-        AND O.[PlanType] = 0 -- Free
         AND OU.[Status] = 2 -- 2 = Confirmed
 END
 GO

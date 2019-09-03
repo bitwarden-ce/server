@@ -64,15 +64,6 @@ CREATE PROCEDURE [dbo].[User_Create]
     @Key NVARCHAR(MAX),
     @PublicKey NVARCHAR(MAX),
     @PrivateKey NVARCHAR(MAX),
-    @Premium BIT,
-    @PremiumExpirationDate DATETIME2(7),
-    @RenewalReminderDate DATETIME2(7),
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @LicenseKey VARCHAR(100),
     @Kdf TINYINT,
     @KdfIterations INT,
     @CreationDate DATETIME2(7),
@@ -99,15 +90,6 @@ BEGIN
         [Key],
         [PublicKey],
         [PrivateKey],
-        [Premium],
-        [PremiumExpirationDate],
-        [RenewalReminderDate],
-        [Storage],
-        [MaxStorageGb],
-        [Gateway],
-        [GatewayCustomerId],
-        [GatewaySubscriptionId],
-        [LicenseKey],
         [Kdf],
         [KdfIterations],
         [CreationDate],
@@ -131,15 +113,6 @@ BEGIN
         @Key,
         @PublicKey,
         @PrivateKey,
-        @Premium,
-        @PremiumExpirationDate,
-        @RenewalReminderDate,
-        @Storage,
-        @MaxStorageGb,
-        @Gateway,
-        @GatewayCustomerId,
-        @GatewaySubscriptionId,
-        @LicenseKey,
         @Kdf,
         @KdfIterations,
         @CreationDate,
@@ -171,15 +144,6 @@ CREATE PROCEDURE [dbo].[User_Update]
     @Key NVARCHAR(MAX),
     @PublicKey NVARCHAR(MAX),
     @PrivateKey NVARCHAR(MAX),
-    @Premium BIT,
-    @PremiumExpirationDate DATETIME2(7),
-    @RenewalReminderDate DATETIME2(7),
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @LicenseKey VARCHAR(100),
     @Kdf TINYINT,
     @KdfIterations INT,
     @CreationDate DATETIME2(7),
@@ -206,15 +170,6 @@ BEGIN
         [Key] = @Key,
         [PublicKey] = @PublicKey,
         [PrivateKey] = @PrivateKey,
-        [Premium] = @Premium,
-        [PremiumExpirationDate] = @PremiumExpirationDate,
-        [RenewalReminderDate] = @RenewalReminderDate,
-        [Storage] = @Storage,
-        [MaxStorageGb] = @MaxStorageGb,
-        [Gateway] = @Gateway,
-        [GatewayCustomerId] = @GatewayCustomerId,
-        [GatewaySubscriptionId] = @GatewaySubscriptionId,
-        [LicenseKey] = @LicenseKey,
         [Kdf] = @Kdf,
         [KdfIterations] = @KdfIterations,
         [CreationDate] = @CreationDate,
@@ -291,7 +246,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[CollectionId] = C.[Id] AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrganizationId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1
@@ -334,7 +288,6 @@ BEGIN
 
     IF @Attachments IS NOT NULL
     BEGIN
-        EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
         EXEC [dbo].[User_UpdateStorage] @UserId
     END
 
@@ -386,7 +339,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[CollectionId] = C.[Id] AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrgId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1
@@ -460,7 +412,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[CollectionId] = C.[Id] AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrganizationId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1

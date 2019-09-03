@@ -30,7 +30,7 @@ namespace Bit.Core.IdentityServer
 
         public async Task<Client> FindClientByIdAsync(string clientId)
         {
-            if(!_globalSettings.SelfHosted && clientId.StartsWith("installation."))
+            if(clientId.StartsWith("installation."))
             {
                 var idParts = clientId.Split('.');
                 if(idParts.Length > 1 && Guid.TryParse(idParts[1], out Guid id))
@@ -52,7 +52,7 @@ namespace Bit.Core.IdentityServer
                     }
                 }
             }
-            else if(_globalSettings.SelfHosted && clientId.StartsWith("internal.") &&
+            else if(clientId.StartsWith("internal.") &&
                 CoreHelpers.SettingHasValue(_globalSettings.InternalIdentityKey))
             {
                 var idParts = clientId.Split('.');
@@ -91,7 +91,6 @@ namespace Bit.Core.IdentityServer
                             AllowedScopes = new string[] { "api.organization" },
                             AllowedGrantTypes = GrantTypes.ClientCredentials,
                             AccessTokenLifetime = 3600 * 1,
-                            Enabled = org.Enabled && org.UseApi,
                             Claims = new List<Claim> { new Claim(JwtClaimTypes.Subject, org.Id.ToString()) }
                         };
                     }

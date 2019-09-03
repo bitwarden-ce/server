@@ -128,7 +128,6 @@ BEGIN
         [UserId] = @UserId
 
     -- Cleanup user
-    EXEC [dbo].[User_UpdateStorage] @UserId
     EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
 END
 GO
@@ -243,8 +242,7 @@ CREATE PROCEDURE [dbo].[CipherDetails_Create]
     @RevisionDate DATETIME2(7),
     @FolderId UNIQUEIDENTIFIER,
     @Favorite BIT,
-    @Edit BIT, -- not used
-    @OrganizationUseTotp BIT -- not used
+    @Edit BIT-- not used
 AS
 BEGIN
     SET NOCOUNT ON
@@ -307,8 +305,7 @@ CREATE PROCEDURE [dbo].[CipherDetails_Update]
     @RevisionDate DATETIME2(7),
     @FolderId UNIQUEIDENTIFIER,
     @Favorite BIT,
-    @Edit BIT, -- not used
-    @OrganizationUseTotp BIT -- not used
+    @Edit BIT -- not used
 AS
 BEGIN
     SET NOCOUNT ON
@@ -451,12 +448,10 @@ BEGIN
 
     IF @OrganizationId IS NOT NULL
     BEGIN
-        EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
         EXEC [dbo].[User_BumpAccountRevisionDateByCipherId] @Id, @OrganizationId
     END
     ELSE IF @UserId IS NOT NULL
     BEGIN
-        EXEC [dbo].[User_UpdateStorage] @UserId
         EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
     END
 END
@@ -496,18 +491,10 @@ BEGIN
 
     IF @OrganizationId IS NOT NULL
     BEGIN
-        IF @Attachments = 1
-        BEGIN
-            EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
-        END
         EXEC [dbo].[User_BumpAccountRevisionDateByCipherId] @Id, @OrganizationId
     END
     ELSE IF @UserId IS NOT NULL
     BEGIN
-        IF @Attachments = 1
-        BEGIN
-            EXEC [dbo].[User_UpdateStorage] @UserId
-        END
         EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
     END
 END
@@ -639,12 +626,10 @@ BEGIN
 
     IF @OrganizationId IS NOT NULL
     BEGIN
-        EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
         EXEC [dbo].[User_BumpAccountRevisionDateByCipherId] @Id, @OrganizationId
     END
     ELSE IF @UserId IS NOT NULL
     BEGIN
-        EXEC [dbo].[User_UpdateStorage] @UserId
         EXEC [dbo].[User_BumpAccountRevisionDate] @UserId
     END
 END
@@ -695,7 +680,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrganizationId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1
@@ -735,12 +719,6 @@ BEGIN
         @CollectionIds
     WHERE
         [Id] IN (SELECT [Id] FROM #AvailableCollections)
-
-    IF @Attachments IS NOT NULL
-    BEGIN
-        EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
-        EXEC [dbo].[User_UpdateStorage] @UserId
-    END
 
     EXEC [dbo].[User_BumpAccountRevisionDateByCipherId] @Id, @OrganizationId
 

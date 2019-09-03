@@ -8,16 +8,6 @@ END
 GO
 
 IF NOT EXISTS (
-    SELECT * FROM sys.indexes  WHERE [Name]='IX_User_Premium_PremiumExpirationDate_RenewalReminderDate'
-    AND object_id = OBJECT_ID('[dbo].[User]')
-)
-BEGIN
-    CREATE NONCLUSTERED INDEX [IX_User_Premium_PremiumExpirationDate_RenewalReminderDate]
-        ON [dbo].[User]([Premium] ASC, [PremiumExpirationDate] ASC, [RenewalReminderDate] ASC)
-END
-GO
-
-IF NOT EXISTS (
     SELECT * FROM sys.indexes  WHERE [Name]='IX_Grant_ExpirationDate'
     AND object_id = OBJECT_ID('[dbo].[Grant]')
 )
@@ -149,15 +139,6 @@ CREATE PROCEDURE [dbo].[User_Create]
     @Key NVARCHAR(MAX),
     @PublicKey NVARCHAR(MAX),
     @PrivateKey NVARCHAR(MAX),
-    @Premium BIT,
-    @PremiumExpirationDate DATETIME2(7),
-    @RenewalReminderDate DATETIME2(7),
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @LicenseKey VARCHAR(100),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -182,15 +163,6 @@ BEGIN
         [Key],
         [PublicKey],
         [PrivateKey],
-        [Premium],
-        [PremiumExpirationDate],
-        [RenewalReminderDate],
-        [Storage],
-        [MaxStorageGb],
-        [Gateway],
-        [GatewayCustomerId],
-        [GatewaySubscriptionId],
-        [LicenseKey],
         [CreationDate],
         [RevisionDate]
     )
@@ -212,15 +184,6 @@ BEGIN
         @Key,
         @PublicKey,
         @PrivateKey,
-        @Premium,
-        @PremiumExpirationDate,
-        @RenewalReminderDate,
-        @Storage,
-        @MaxStorageGb,
-        @Gateway,
-        @GatewayCustomerId,
-        @GatewaySubscriptionId,
-        @LicenseKey,
         @CreationDate,
         @RevisionDate
     )
@@ -250,15 +213,6 @@ CREATE PROCEDURE [dbo].[User_Update]
     @Key NVARCHAR(MAX),
     @PublicKey NVARCHAR(MAX),
     @PrivateKey NVARCHAR(MAX),
-    @Premium BIT,
-    @PremiumExpirationDate DATETIME2(7),
-    @RenewalReminderDate DATETIME2(7),
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @LicenseKey VARCHAR(100),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -283,72 +237,10 @@ BEGIN
         [Key] = @Key,
         [PublicKey] = @PublicKey,
         [PrivateKey] = @PrivateKey,
-        [Premium] = @Premium,
-        [PremiumExpirationDate] = @PremiumExpirationDate,
-        [RenewalReminderDate] = @RenewalReminderDate,
-        [Storage] = @Storage,
-        [MaxStorageGb] = @MaxStorageGb,
-        [Gateway] = @Gateway,
-        [GatewayCustomerId] = @GatewayCustomerId,
-        [GatewaySubscriptionId] = @GatewaySubscriptionId,
-        [LicenseKey] = @LicenseKey,
         [CreationDate] = @CreationDate,
         [RevisionDate] = @RevisionDate
     WHERE
         [Id] = @Id
-END
-GO
-
-IF OBJECT_ID('[dbo].[User_UpdateRenewalReminderDate]') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[User_UpdateRenewalReminderDate]
-END
-GO
-
-CREATE PROCEDURE [dbo].[User_UpdateRenewalReminderDate]
-    @Id UNIQUEIDENTIFIER,
-    @RenewalReminderDate DATETIME2(7)
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    UPDATE
-        [dbo].[User]
-    SET
-        [RenewalReminderDate] = @RenewalReminderDate
-    WHERE
-        [Id] = @Id
-END
-GO
-
-IF OBJECT_ID('[dbo].[User_ReadByPremiumRenewal]') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[User_ReadByPremiumRenewal]
-END
-GO
-
-CREATE PROCEDURE [dbo].[User_ReadByPremiumRenewal]
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @WindowRef DATETIME2(7) = GETUTCDATE()
-    DECLARE @WindowStart DATETIME2(7) = DATEADD (day, -15, @WindowRef)
-    DECLARE @WindowEnd DATETIME2(7) = DATEADD (day, 15, @WindowRef)
-
-    SELECT
-        *
-    FROM
-        [dbo].[UserView]
-    WHERE
-        [Premium] = 1
-        AND [PremiumExpirationDate] >= @WindowRef
-        AND [PremiumExpirationDate] < @WindowEnd
-        AND (
-            [RenewalReminderDate] IS NULL
-            OR [RenewalReminderDate] < @WindowStart
-        )
-        AND [Gateway] = 1 -- Braintree
 END
 GO
 
@@ -392,130 +284,12 @@ BEGIN
     WHERE
         OU.[UserId] = @UserId
         AND OU.[Status] = 2 -- 2 = Confirmed
-        AND O.[Enabled] = 1
         AND (
             OU.[AccessAll] = 1
             OR CU.[CollectionId] IS NOT NULL
             OR G.[AccessAll] = 1
             OR CG.[CollectionId] IS NOT NULL
         )
-END
-GO
-
-IF OBJECT_ID('[dbo].[Organization_UpdateStorage]') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[Organization_UpdateStorage]
-END
-GO
-
-CREATE PROCEDURE [dbo].[Organization_UpdateStorage]
-    @Id UNIQUEIDENTIFIER
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @Storage BIGINT
-
-    CREATE TABLE #OrgStorageUpdateTemp
-    ( 
-        [Id] UNIQUEIDENTIFIER NOT NULL,
-        [Attachments] VARCHAR(MAX) NULL
-    )
-
-    INSERT INTO #OrgStorageUpdateTemp
-    SELECT
-        [Id],
-        [Attachments]
-    FROM
-        [dbo].[Cipher]
-    WHERE
-        [UserId] IS NULL
-        AND [OrganizationId] = @Id
-
-    ;WITH [CTE] AS (
-        SELECT
-            [Id],
-            (
-                SELECT
-                    SUM(CAST(JSON_VALUE(value,'$.Size') AS BIGINT))
-                FROM
-                    OPENJSON([Attachments])
-            ) [Size]
-        FROM
-            #OrgStorageUpdateTemp
-    )
-    SELECT
-        @Storage = SUM([Size])
-    FROM
-        [CTE]
-
-    DROP TABLE #OrgStorageUpdateTemp
-
-    UPDATE
-        [dbo].[Organization]
-    SET
-        [Storage] = @Storage,
-        [RevisionDate] = GETUTCDATE()
-    WHERE
-        [Id] = @Id
-END
-GO
-
-IF OBJECT_ID('[dbo].[User_UpdateStorage]') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[User_UpdateStorage]
-END
-GO
-
-CREATE PROCEDURE [dbo].[User_UpdateStorage]
-    @Id UNIQUEIDENTIFIER
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @Storage BIGINT
-
-    CREATE TABLE #UserStorageUpdateTemp
-    ( 
-        [Id] UNIQUEIDENTIFIER NOT NULL,
-        [Attachments] VARCHAR(MAX) NULL
-    )
-
-    INSERT INTO #UserStorageUpdateTemp
-    SELECT
-        [Id],
-        [Attachments]
-    FROM
-        [dbo].[Cipher]
-    WHERE
-        [UserId] = @Id
-
-    ;WITH [CTE] AS (
-        SELECT
-            [Id],
-            (
-                SELECT
-                    SUM(CAST(JSON_VALUE(value,'$.Size') AS BIGINT))
-                FROM
-                    OPENJSON([Attachments])
-            ) [Size]
-        FROM
-            #UserStorageUpdateTemp
-    )
-    SELECT
-        @Storage = SUM([CTE].[Size])
-    FROM
-        [CTE]
-
-    DROP TABLE #UserStorageUpdateTemp
-
-    UPDATE
-        [dbo].[User]
-    SET
-        [Storage] = @Storage,
-        [RevisionDate] = GETUTCDATE()
-    WHERE
-        [Id] = @Id
 END
 GO
 
@@ -557,7 +331,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrganizationId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1
@@ -626,7 +399,7 @@ BEGIN
     INNER JOIN
         [CTE] OU ON C.[UserId] IS NULL AND C.[OrganizationId] IN (SELECT [OrganizationId] FROM [CTE])
     INNER JOIN
-        [dbo].[Organization] O ON O.[Id] = OU.[OrganizationId] AND O.[Id] = C.[OrganizationId] AND O.[Enabled] = 1
+        [dbo].[Organization] O ON O.[Id] = OU.[OrganizationId] AND O.[Id] = C.[OrganizationId]
     LEFT JOIN
         [dbo].[CollectionCipher] CC ON OU.[AccessAll] = 0 AND CC.[CipherId] = C.[Id]
     LEFT JOIN

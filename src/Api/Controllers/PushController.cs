@@ -14,7 +14,6 @@ namespace Bit.Api.Controllers
 {
     [Route("push")]
     [Authorize("Push")]
-    [SelfHosted(NotSelfHostedOnly = true)]
     public class PushController : Controller
     {
         private readonly IPushRegistrationService _pushRegistrationService;
@@ -112,7 +111,7 @@ namespace Bit.Api.Controllers
                 return true;
             }
 
-            return _currentContext.InstallationId.HasValue && !_globalSettings.SelfHosted;
+            return _currentContext.InstallationId.HasValue;
         }
     }
 }

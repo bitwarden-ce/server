@@ -24,7 +24,7 @@ namespace Bit.Core.Identity
             CancellationToken cancellationToken = default(CancellationToken))
         {
             var user = await _userRepository.GetByEmailAsync(normalizedEmail);
-            return user?.ToIdentityUser(await _userService.TwoFactorIsEnabledAsync(user));
+            return user?.ToIdentityUser();
         }
 
         public override async Task<IdentityUser> FindByIdAsync(string userId,
@@ -36,7 +36,7 @@ namespace Bit.Core.Identity
             }
 
             var user = await _userRepository.GetByIdAsync(userIdGuid);
-            return user?.ToIdentityUser(await _userService.TwoFactorIsEnabledAsync(user));
+            return user?.ToIdentityUser();
         }
     }
 }

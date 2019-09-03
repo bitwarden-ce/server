@@ -9,6 +9,5 @@ namespace Bit.Core.Models
         string TwoFactorProviders { get; }
         Dictionary<TwoFactorProviderType, TwoFactorProvider> GetTwoFactorProviders();
         Guid? GetUserId();
-        bool GetPremium();
     }
 }

@@ -88,7 +88,6 @@ namespace Bit.Core.Test.Services
             var testOrganization = new Models.Table.Organization
             {
                 Id = testOrganizationId,
-                MaxCollections = 2,
             };
             _organizationRepository.GetByIdAsync(testOrganizationId).Returns(testOrganization);
             _collectionRepository.GetCountByOrganizationIdAsync(testOrganizationId).Returns(2);

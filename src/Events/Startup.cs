@@ -50,16 +50,8 @@ namespace Bit.Events
             // Services
             var usingServiceBusAppCache = CoreHelpers.SettingHasValue(globalSettings.ServiceBus.ConnectionString) &&
                 CoreHelpers.SettingHasValue(globalSettings.ServiceBus.ApplicationCacheTopicName);
-            if(usingServiceBusAppCache)
-            {
-                services.AddSingleton<IApplicationCacheService, InMemoryServiceBusApplicationCacheService>();
-            }
-            else
-            {
-                services.AddSingleton<IApplicationCacheService, InMemoryApplicationCacheService>();
-            }
             services.AddScoped<IEventService, EventService>();
-            if(!globalSettings.SelfHosted && CoreHelpers.SettingHasValue(globalSettings.Events.ConnectionString))
+            if(CoreHelpers.SettingHasValue(globalSettings.Events.ConnectionString))
             {
                 services.AddSingleton<IEventWriteService, AzureQueueEventWriteService>();
             }

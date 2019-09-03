@@ -19,7 +19,7 @@ namespace Bit.Core.Identity
 
         public Task<bool> CanGenerateTwoFactorTokenAsync(Organization organization)
         {
-            if(organization == null || !organization.Enabled || !organization.Use2fa)
+            if(organization == null)
             {
                 return Task.FromResult(false);
             }
@@ -32,7 +32,7 @@ namespace Bit.Core.Identity
 
         public Task<string> GenerateAsync(Organization organization, User user)
         {
-            if(organization == null || !organization.Enabled || !organization.Use2fa)
+            if(organization == null)
             {
                 return Task.FromResult<string>(null);
             }
@@ -50,7 +50,7 @@ namespace Bit.Core.Identity
 
         public Task<bool> ValidateAsync(string token, Organization organization, User user)
         {
-            if(organization == null || !organization.Enabled || !organization.Use2fa)
+            if(organization == null)
             {
                 return Task.FromResult(false);
             }

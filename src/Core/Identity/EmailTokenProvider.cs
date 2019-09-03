@@ -26,8 +26,7 @@ namespace Bit.Core.Identity
                 return false;
             }
 
-            return await _serviceProvider.GetRequiredService<IUserService>().
-                TwoFactorProviderIsEnabledAsync(TwoFactorProviderType.Email, user);
+            return true;
         }
 
         public Task<string> GenerateAsync(string purpose, UserManager<User> manager, User user)

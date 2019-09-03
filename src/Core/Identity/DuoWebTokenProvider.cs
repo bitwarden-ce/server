@@ -25,29 +25,17 @@ namespace Bit.Core.Identity
 
         public async Task<bool> CanGenerateTwoFactorTokenAsync(UserManager<User> manager, User user)
         {
-            var userService = _serviceProvider.GetRequiredService<IUserService>();
-            if(!(await userService.CanAccessPremium(user)))
-            {
-                return false;
-            }
-
             var provider = user.GetTwoFactorProvider(TwoFactorProviderType.Duo);
             if(!HasProperMetaData(provider))
             {
                 return false;
             }
 
-            return await userService.TwoFactorProviderIsEnabledAsync(TwoFactorProviderType.Duo, user);
+            return true;
         }
 
         public async Task<string> GenerateAsync(string purpose, UserManager<User> manager, User user)
         {
-            var userService = _serviceProvider.GetRequiredService<IUserService>();
-            if(!(await userService.CanAccessPremium(user)))
-            {
-                return null;
-            }
-
             var provider = user.GetTwoFactorProvider(TwoFactorProviderType.Duo);
             if(!HasProperMetaData(provider))
             {
@@ -61,12 +49,6 @@ namespace Bit.Core.Identity
 
         public async Task<bool> ValidateAsync(string purpose, string token, UserManager<User> manager, User user)
         {
-            var userService = _serviceProvider.GetRequiredService<IUserService>();
-            if(!(await userService.CanAccessPremium(user)))
-            {
-                return false;
-            }
-
             var provider = user.GetTwoFactorProvider(TwoFactorProviderType.Duo);
             if(!HasProperMetaData(provider))
             {

@@ -21,36 +21,22 @@ namespace Bit.Core.Services
             GlobalSettings globalSettings,
             IHttpContextAccessor httpContextAccessor,
             ILogger<MultiServicePushNotificationService> logger,
-            ILogger<RelayPushNotificationService> relayLogger,
             ILogger<NotificationsApiPushNotificationService> hubLogger)
         {
-            if(globalSettings.SelfHosted)
+            if(CoreHelpers.SettingHasValue(globalSettings.InternalIdentityKey) &&
+                CoreHelpers.SettingHasValue(globalSettings.BaseServiceUri.InternalNotifications))
             {
-                if(CoreHelpers.SettingHasValue(globalSettings.PushRelayBaseUri) &&
-                    globalSettings.Installation?.Id != null &&
-                    CoreHelpers.SettingHasValue(globalSettings.Installation?.Key))
-                {
-                    _services.Add(new RelayPushNotificationService(deviceRepository, globalSettings,
-                        httpContextAccessor, relayLogger));
-                }
-                if(CoreHelpers.SettingHasValue(globalSettings.InternalIdentityKey) &&
-                    CoreHelpers.SettingHasValue(globalSettings.BaseServiceUri.InternalNotifications))
-                {
-                    _services.Add(new NotificationsApiPushNotificationService(
-                        globalSettings, httpContextAccessor, hubLogger));
-                }
+                _services.Add(new NotificationsApiPushNotificationService(
+                    globalSettings, httpContextAccessor, hubLogger));
             }
-            else
+            if(CoreHelpers.SettingHasValue(globalSettings.NotificationHub.ConnectionString))
             {
-                if(CoreHelpers.SettingHasValue(globalSettings.NotificationHub.ConnectionString))
-                {
-                    _services.Add(new NotificationHubPushNotificationService(installationDeviceRepository,
-                        globalSettings, httpContextAccessor));
-                }
-                if(CoreHelpers.SettingHasValue(globalSettings.Notifications?.ConnectionString))
-                {
-                    _services.Add(new AzureQueuePushNotificationService(globalSettings, httpContextAccessor));
-                }
+                _services.Add(new NotificationHubPushNotificationService(installationDeviceRepository,
+                    globalSettings, httpContextAccessor));
+            }
+            if(CoreHelpers.SettingHasValue(globalSettings.Notifications?.ConnectionString))
+            {
+                _services.Add(new AzureQueuePushNotificationService(globalSettings, httpContextAccessor));
             }
             
             _logger = logger;

@@ -10,15 +10,6 @@
     <input type="text" class="form-control mb-2 mr-2" placeholder="Name" asp-for="Name" name="name">
     <label class="sr-only" asp-for="UserEmail">User email</label>
     <input type="text" class="form-control mb-2 mr-2" placeholder="User email" asp-for="UserEmail" name="userEmail">
-    @if(!Model.SelfHosted)
-    {
-        <label class="sr-only" asp-for="Paid">Customer</label>
-        <select class="form-control mb-2 mr-2" asp-for="Paid" name="paid">
-            <option asp-selected="!Model.Paid.HasValue" value="">-- Customer --</option>
-            <option asp-selected="Model.Paid.GetValueOrDefault(false)" value="true">Paid</option>
-            <option asp-selected="!Model.Paid.GetValueOrDefault(true)" value="false">Freeloader</option>
-        </select>
-    }
     <button type="submit" class="btn btn-primary mb-2" title="Search"><i class="fa fa-search"></i> Search</button>
 </form>
 
@@ -27,8 +18,6 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th style="width: 190px;">Plan</th>
-                <th style="width: 80px;">Seats</th>
                 <th style="width: 150px;">Created</th>
                 <th style="width: 170px; min-width: 170px;">Details</th>
             </tr>
@@ -49,47 +38,11 @@
                             <a asp-action="@Model.Action" asp-route-id="@org.Id">@org.Name</a>
                         </td>
                         <td>
-                            @org.Plan
-                        </td>
-                        <td>
-                            @org.Seats
-                        </td>
-                        <td>
                             <span title="@org.CreationDate.ToString()">
                                 @org.CreationDate.ToShortDateString()
                             </span>
                         </td>
                         <td>
-                            @if(!Model.SelfHosted)
-                            {
-                                if(!string.IsNullOrWhiteSpace(org.GatewaySubscriptionId))
-                                {
-                                    <i class="fa fa-usd fa-lg fa-fw" title="Paid"></i>
-                                }
-                                else
-                                {
-                                    <i class="fa fa-smile-o fa-lg fa-fw text-muted" title="Freeloader"></i>
-                                }
-                            }
-                            @if(org.MaxStorageGb.HasValue && org.MaxStorageGb > 1)
-                            {
-                                <i class="fa fa-plus-square fa-lg fa-fw"
-                                   title="Additional Storage, @(org.MaxStorageGb - 1) GB"></i>
-                            }
-                            else
-                            {
-                                <i class="fa fa-plus-square-o fa-lg fa-fw text-muted"
-                                   title="No Additional Storage"></i>
-                            }
-                            @if(org.Enabled)
-                            {
-                                <i class="fa fa-check-circle fa-lg fa-fw"
-                                   title="Enabled, expires @(org.ExpirationDate?.ToShortDateString() ?? "-")"></i>
-                            }
-                            else
-                            {
-                                <i class="fa fa-times-circle-o fa-lg fa-fw text-muted" title="Disabled"></i>
-                            }
                             @if(org.TwoFactorIsEnabled())
                             {
                                 <i class="fa fa-lock fa-lg fa-fw" title="2FA Enabled"></i>
@@ -113,7 +66,7 @@
             <li class="page-item">
                 <a class="page-link" asp-action="Index" asp-route-page="@Model.PreviousPage.Value"
                    asp-route-count="@Model.Count" asp-route-userEmail="@Model.UserEmail"
-                   asp-route-name="@Model.Name" asp-route-paid="@Model.Paid">Previous</a>
+                   asp-route-name="@Model.Name">Previous</a>
             </li>
         }
         else
@@ -127,7 +80,7 @@
             <li class="page-item">
                 <a class="page-link" asp-action="Index" asp-route-page="@Model.NextPage.Value"
                    asp-route-count="@Model.Count" asp-route-userEmail="@Model.UserEmail"
-                   asp-route-name="@Model.Name" asp-route-paid="@Model.Paid">Next</a>
+                   asp-route-name="@Model.Name">Next</a>
             </li>
         }
         else

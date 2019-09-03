@@ -10,7 +10,6 @@ using Bit.Core.Utilities;
 namespace Bit.Api.Controllers
 {
     [Route("installations")]
-    [SelfHosted(NotSelfHostedOnly = true)]
     public class InstallationsController : Controller
     {
         private readonly IInstallationRepository _installationRepository;

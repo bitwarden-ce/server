@@ -15,7 +15,6 @@ namespace Bit.Core.Models.Data
         public string Name { get; set; }
         public string Email { get; set; }
         public string TwoFactorProviders { get; set; }
-        public bool? Premium { get; set; }
         public OrganizationUserStatusType Status { get; set; }
         public OrganizationUserType Type { get; set; }
         public bool AccessAll { get; set; }
@@ -48,11 +47,6 @@ namespace Bit.Core.Models.Data
         public Guid? GetUserId()
         {
             return UserId;
-        }
-
-        public bool GetPremium()
-        {
-            return Premium.GetValueOrDefault(false);
         }
     }
 }

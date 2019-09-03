@@ -580,11 +580,7 @@ namespace Bit.Core.Utilities
                 return null;
             }
 
-            if(!globalSettings.SelfHosted && httpContext.Request.Headers.ContainsKey(CloudFlareConnectingIp))
-            {
-                return httpContext.Request.Headers[CloudFlareConnectingIp].ToString();
-            }
-            if(globalSettings.SelfHosted && httpContext.Request.Headers.ContainsKey(RealIp))
+            if(httpContext.Request.Headers.ContainsKey(RealIp))
             {
                 return httpContext.Request.Headers[RealIp].ToString();
             }

@@ -35,11 +35,6 @@ namespace Bit.Core.Services
                 throw new BadRequestException("Organization not found");
             }
 
-            if(!org.UseGroups)
-            {
-                throw new BadRequestException("This organization cannot use groups.");
-            }
-
             if(group.Id == default(Guid))
             {
                 group.CreationDate = group.RevisionDate = DateTime.UtcNow;

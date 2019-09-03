@@ -13,7 +13,6 @@ using Serilog.Events;
 namespace Bit.Admin.Controllers
 {
     [Authorize]
-    [SelfHosted(NotSelfHostedOnly = true)]
     public class LogsController : Controller
     {
         private const string Database = "Diagnostics";

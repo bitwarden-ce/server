@@ -64,8 +64,7 @@ namespace Bit.Api.Controllers
             }
 
             var organizationUsers = await _organizationUserRepository.GetManyDetailsByOrganizationAsync(orgGuidId);
-            var responseTasks = organizationUsers.Select(async o => new OrganizationUserUserDetailsResponseModel(o,
-                await _userService.TwoFactorIsEnabledAsync(o)));
+            var responseTasks = organizationUsers.Select(async o => new OrganizationUserUserDetailsResponseModel(o));
             var responses = await Task.WhenAll(responseTasks);
             return new ListResponseModel<OrganizationUserUserDetailsResponseModel>(responses);
         }

@@ -10,7 +10,7 @@ namespace Bit.Core.Models.Api
 {
     public class CipherMiniResponseModel : ResponseModel
     {
-        public CipherMiniResponseModel(Cipher cipher, GlobalSettings globalSettings, bool orgUseTotp, string obj = "cipherMini")
+        public CipherMiniResponseModel(Cipher cipher, GlobalSettings globalSettings, string obj = "cipherMini")
             : base(obj)
         {
             if(cipher == null)
@@ -59,7 +59,6 @@ namespace Bit.Core.Models.Api
             RevisionDate = cipher.RevisionDate;
             OrganizationId = cipher.OrganizationId?.ToString();
             Attachments = AttachmentResponseModel.FromCipher(cipher, globalSettings);
-            OrganizationUseTotp = orgUseTotp;
         }
 
         public string Id { get; set; }
@@ -75,14 +74,13 @@ namespace Bit.Core.Models.Api
         public IEnumerable<CipherFieldModel> Fields { get; set; }
         public IEnumerable<CipherPasswordHistoryModel> PasswordHistory { get; set; }
         public IEnumerable<AttachmentResponseModel> Attachments { get; set; }
-        public bool OrganizationUseTotp { get; set; }
         public DateTime RevisionDate { get; set; }
     }
 
     public class CipherResponseModel : CipherMiniResponseModel
     {
         public CipherResponseModel(CipherDetails cipher, GlobalSettings globalSettings, string obj = "cipher")
-            : base(cipher, globalSettings, cipher.OrganizationUseTotp, obj)
+            : base(cipher, globalSettings, obj)
         {
             FolderId = cipher.FolderId?.ToString();
             Favorite = cipher.Favorite;
@@ -124,7 +122,7 @@ namespace Bit.Core.Models.Api
     {
         public CipherMiniDetailsResponseModel(Cipher cipher, GlobalSettings globalSettings,
             IDictionary<Guid, IGrouping<Guid, CollectionCipher>> collectionCiphers, string obj = "cipherMiniDetails")
-            : base(cipher, globalSettings, false, obj)
+            : base(cipher, globalSettings, obj)
         {
             if(collectionCiphers?.ContainsKey(cipher.Id) ?? false)
             {

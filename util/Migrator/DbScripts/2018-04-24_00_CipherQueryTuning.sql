@@ -65,18 +65,13 @@ SELECT
             OR CG.[ReadOnly] = 0
         THEN 1
         ELSE 0
-    END [Edit],
-    CASE
-        WHEN O.[UseTotp] = 1
-        THEN 1
-        ELSE 0
-    END [OrganizationUseTotp]
+    END [Edit]
 FROM
     [dbo].[CipherDetails](@UserId) C
 INNER JOIN
     [CTE] OU ON C.[UserId] IS NULL AND C.[OrganizationId] IN (SELECT [OrganizationId] FROM [CTE])
 INNER JOIN
-    [dbo].[Organization] O ON O.[Id] = OU.OrganizationId AND O.[Id] = C.[OrganizationId] AND O.[Enabled] = 1
+    [dbo].[Organization] O ON O.[Id] = OU.OrganizationId AND O.[Id] = C.[OrganizationId]
 LEFT JOIN
     [dbo].[CollectionCipher] CC ON OU.[AccessAll] = 0 AND CC.[CipherId] = C.[Id]
 LEFT JOIN
@@ -97,8 +92,7 @@ UNION ALL
 
 SELECT
     *,
-    1 [Edit],
-    0 [OrganizationUseTotp]
+    1 [Edit]
 FROM
     [dbo].[CipherDetails](@UserId)
 WHERE
@@ -155,17 +149,6 @@ END
 GO
 
 IF NOT EXISTS (
-    SELECT * FROM sys.indexes  WHERE [Name]='IX_Organization_Enabled'
-    AND object_id = OBJECT_ID('[dbo].[Organization]')
-)
-BEGIN
-    CREATE NONCLUSTERED INDEX [IX_Organization_Enabled]
-        ON [dbo].[Organization]([Id] ASC, [Enabled] ASC)
-        INCLUDE ([UseTotp])
-END
-GO
-
-IF NOT EXISTS (
     SELECT * FROM sys.indexes  WHERE [Name]='IX_Collection_OrganizationId_IncludeAll'
     AND object_id = OBJECT_ID('[dbo].[Collection]')
 )
@@ -202,8 +185,7 @@ BEGIN
 
     SELECT
         *,
-        1 [Edit],
-        0 [OrganizationUseTotp]
+        1 [Edit]
     FROM
         [dbo].[CipherDetails](@UserId)
     WHERE
@@ -267,52 +249,6 @@ BEGIN
     DELETE
     FROM
         [dbo].[Organization]
-    WHERE
-        [Id] = @Id
-END
-GO
-
-IF OBJECT_ID('[dbo].[Organization_UpdateStorage]') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[Organization_UpdateStorage]
-END
-GO
-
-CREATE PROCEDURE [dbo].[Organization_UpdateStorage]
-    @Id UNIQUEIDENTIFIER
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    DECLARE @Storage BIGINT
-
-    ;WITH [CTE] AS (
-        SELECT
-            [Id],
-            (
-                SELECT
-                    SUM(CAST(JSON_VALUE(value,'$.Size') AS BIGINT))
-                FROM
-                    OPENJSON([Attachments])
-            ) [Size]
-        FROM
-            [dbo].[Cipher]
-    )
-    SELECT
-        @Storage = SUM([CTE].[Size])
-    FROM
-        [dbo].[Cipher] C
-    LEFT JOIN
-        [CTE] ON C.[Id] = [CTE].[Id]
-    WHERE
-        C.[UserId] IS NULL
-        AND C.[OrganizationId] = @Id
-
-    UPDATE
-        [dbo].[Organization]
-    SET
-        [Storage] = @Storage,
-        [RevisionDate] = GETUTCDATE()
     WHERE
         [Id] = @Id
 END

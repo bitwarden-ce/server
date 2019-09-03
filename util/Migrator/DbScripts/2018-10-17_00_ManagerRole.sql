@@ -38,7 +38,6 @@ LEFT JOIN
 WHERE
     OU.[UserId] = @UserId
     AND OU.[Status] = 2 -- 2 = Confirmed
-    AND O.[Enabled] = 1
     AND (
         OU.[AccessAll] = 1
         OR CU.[CollectionId] IS NOT NULL
@@ -286,7 +285,6 @@ BEGIN
                 [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[CollectionId] = C.[Id] AND CG.[GroupId] = GU.[GroupId]
             WHERE
                 O.[Id] = @OrganizationId
-                AND O.[Enabled] = 1
                 AND OU.[Status] = 2 -- Confirmed
                 AND (
                     OU.[AccessAll] = 1
@@ -339,14 +337,13 @@ CREATE PROCEDURE [dbo].[CipherDetails_CreateWithCollections]
     @FolderId UNIQUEIDENTIFIER,
     @Favorite BIT,
     @Edit BIT, -- not used
-    @OrganizationUseTotp BIT, -- not used
     @CollectionIds AS [dbo].[GuidIdArray] READONLY
 AS
 BEGIN
     SET NOCOUNT ON
 
     EXEC [dbo].[CipherDetails_Create] @Id, @UserId, @OrganizationId, @Type, @Data, @Favorites, @Folders,
-        @Attachments, @CreationDate, @RevisionDate, @FolderId, @Favorite, @Edit, @OrganizationUseTotp
+        @Attachments, @CreationDate, @RevisionDate, @FolderId, @Favorite, @Edit
 
     DECLARE @UpdateCollectionsSuccess INT
     EXEC @UpdateCollectionsSuccess = [dbo].[Cipher_UpdateCollections] @Id, @UserId, @OrganizationId, @CollectionIds

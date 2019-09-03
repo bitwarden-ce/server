@@ -37,11 +37,6 @@ namespace Bit.Api
 
             // Settings
             var globalSettings = services.AddGlobalSettingsServices(Configuration);
-            if(!globalSettings.SelfHosted)
-            {
-                services.Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimitOptions"));
-                services.Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"));
-            }
 
             // Data Protection
             services.AddCustomDataProtectionServices(Environment, globalSettings);
@@ -57,16 +52,6 @@ namespace Bit.Api
 
             // Caching
             services.AddMemoryCache();
-
-            // BitPay
-            services.AddSingleton<BitPayClient>();
-
-            if(!globalSettings.SelfHosted)
-            {
-                // Rate limiting
-                services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
-                services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
-            }
 
             // Identity
             services.AddCustomIdentityServices(globalSettings);
@@ -123,12 +108,9 @@ namespace Bit.Api
 
             services.AddSwagger(globalSettings);
 
-            if(globalSettings.SelfHosted)
-            {
-                // Jobs service
-                Jobs.JobsHostedService.AddJobsServices(services);
-                services.AddHostedService<Jobs.JobsHostedService>();
-            }
+            // Jobs service
+            Jobs.JobsHostedService.AddJobsServices(services);
+            services.AddHostedService<Jobs.JobsHostedService>();
             if(CoreHelpers.SettingHasValue(globalSettings.ServiceBus.ConnectionString) &&
                 CoreHelpers.SettingHasValue(globalSettings.ServiceBus.ApplicationCacheTopicName))
             {
@@ -148,15 +130,7 @@ namespace Bit.Api
             // Default Middleware
             app.UseDefaultMiddleware(env, globalSettings);
 
-            if(!globalSettings.SelfHosted)
-            {
-                // Rate limiting
-                app.UseMiddleware<CustomIpRateLimitMiddleware>();
-            }
-            else
-            {
-                app.UseForwardedHeaders(globalSettings);
-            }
+            app.UseForwardedHeaders(globalSettings);
 
             // Add static files to the request pipeline.
             app.UseStaticFiles();
@@ -175,25 +149,22 @@ namespace Bit.Api
             app.UseMvc();
 
             // Add Swagger
-            if(Environment.IsDevelopment() || globalSettings.SelfHosted)
+            app.UseSwagger(config =>
             {
-                app.UseSwagger(config =>
-                {
-                    config.RouteTemplate = "specs/{documentName}/swagger.json";
-                    var host = globalSettings.BaseServiceUri.Api.Replace("https://", string.Empty)
-                        .Replace("http://", string.Empty);
-                    config.PreSerializeFilters.Add((swaggerDoc, httpReq) => swaggerDoc.Host = host);
-                });
-                app.UseSwaggerUI(config =>
-                {
-                    config.DocumentTitle = "Bitwarden API Documentation";
-                    config.RoutePrefix = "docs";
-                    config.SwaggerEndpoint($"{globalSettings.BaseServiceUri.Api}/specs/public/swagger.json",
-                        "Bitwarden Public API");
-                    config.OAuthClientId("accountType.id");
-                    config.OAuthClientSecret("secretKey");
-                });
-            }
+                config.RouteTemplate = "specs/{documentName}/swagger.json";
+                var host = globalSettings.BaseServiceUri.Api.Replace("https://", string.Empty)
+                    .Replace("http://", string.Empty);
+                config.PreSerializeFilters.Add((swaggerDoc, httpReq) => swaggerDoc.Host = host);
+            });
+            app.UseSwaggerUI(config =>
+            {
+                config.DocumentTitle = "Bitwarden API Documentation";
+                config.RoutePrefix = "docs";
+                config.SwaggerEndpoint($"{globalSettings.BaseServiceUri.Api}/specs/public/swagger.json",
+                    "Bitwarden Public API");
+                config.OAuthClientId("accountType.id");
+                config.OAuthClientSecret("secretKey");
+            });
         }
     }
 }

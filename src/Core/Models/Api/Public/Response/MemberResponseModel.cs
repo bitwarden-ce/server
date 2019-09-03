@@ -27,7 +27,7 @@ namespace Bit.Core.Models.Api.Public
             Collections = collections?.Select(c => new AssociationWithPermissionsResponseModel(c));
         }
 
-        public MemberResponseModel(OrganizationUserUserDetails user, bool twoFactorEnabled,
+        public MemberResponseModel(OrganizationUserUserDetails user,
             IEnumerable<SelectionReadOnly> collections)
             : base(user)
         {
@@ -39,7 +39,6 @@ namespace Bit.Core.Models.Api.Public
             Id = user.Id;
             Name = user.Name;
             Email = user.Email;
-            TwoFactorEnabled = twoFactorEnabled;
             Status = user.Status;
             Collections = collections?.Select(c => new AssociationWithPermissionsResponseModel(c));
         }

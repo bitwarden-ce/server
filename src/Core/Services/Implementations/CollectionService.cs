@@ -44,17 +44,7 @@ namespace Bit.Core.Services
 
             if(collection.Id == default(Guid))
             {
-                if(org.MaxCollections.HasValue)
-                {
-                    var collectionCount = await _collectionRepository.GetCountByOrganizationIdAsync(org.Id);
-                    if(org.MaxCollections.Value <= collectionCount)
-                    {
-                        throw new BadRequestException("You have reached the maximum number of collections " +
-                        $"({org.MaxCollections.Value}) for this organization.");
-                    }
-                }
-
-                if(groups == null || !org.UseGroups)
+                if(groups == null)
                 {
                     await _collectionRepository.CreateAsync(collection);
                 }
@@ -79,15 +69,7 @@ namespace Bit.Core.Services
             }
             else
             {
-                if(!org.UseGroups)
-                {
-                    await _collectionRepository.ReplaceAsync(collection);
-                }
-                else
-                {
-                    await _collectionRepository.ReplaceAsync(collection, groups ?? new List<SelectionReadOnly>());
-                }
-
+                await _collectionRepository.ReplaceAsync(collection, groups ?? new List<SelectionReadOnly>());
                 await _eventService.LogCollectionEventAsync(collection, Enums.EventType.Collection_Updated);
             }
         }

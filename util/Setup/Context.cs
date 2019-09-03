@@ -41,9 +41,6 @@ namespace Bit.Setup
                 }
                 Config.Url = url;
 
-                var push = Helpers.GetValueFromEnvFile("global", "globalSettings__pushRelayBaseUri");
-                Config.PushNotifications = push != "REPLACE";
-
                 var composeFile = "/bitwarden/docker/docker-compose.yml";
                 if(File.Exists(composeFile))
                 {
@@ -147,6 +144,7 @@ namespace Bit.Setup
             public string InstallationKey { get; set; }
             public bool DiffieHellman { get; set; }
             public bool Trusted { get; set; }
+            public bool? Ssl { get; set; }
             public bool SelfSignedCert { get; set; }
             public string IdentityCertPassword { get; set; }
             public string Domain { get; set; }

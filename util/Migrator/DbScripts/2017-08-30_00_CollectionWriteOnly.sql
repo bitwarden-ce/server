@@ -42,7 +42,6 @@ BEGIN
     WHERE
         OU.[UserId] = @UserId
         AND OU.[Status] = 2 -- 2 = Confirmed
-        AND O.[Enabled] = 1
         AND (
             OU.[AccessAll] = 1
             OR CU.[CollectionId] IS NOT NULL
@@ -98,7 +97,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrganizationId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1
@@ -138,12 +136,6 @@ BEGIN
         @CollectionIds
     WHERE
         [Id] IN (SELECT [Id] FROM #AvailableCollections)
-
-    IF @Attachments IS NOT NULL
-    BEGIN
-        EXEC [dbo].[Organization_UpdateStorage] @OrganizationId
-        EXEC [dbo].[User_UpdateStorage] @UserId
-    END
 
     EXEC [dbo].[User_BumpAccountRevisionDateByOrganizationId] @OrganizationId
 
@@ -187,7 +179,6 @@ BEGIN
             [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[GroupId] = GU.[GroupId]
         WHERE
             O.[Id] = @OrgId
-            AND O.[Enabled] = 1
             AND OU.[Status] = 2 -- Confirmed
             AND (
                 OU.[AccessAll] = 1

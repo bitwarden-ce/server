@@ -39,7 +39,7 @@ namespace Bit.Api.Controllers
             _userService = userService;
             _currentContext = currentContext;
             _globalSettings = globalSettings;
-            _userAgent = _globalSettings.SelfHosted ? "Bitwarden Self-Hosted" : "Bitwarden";
+            _userAgent = "Bitwarden Community Edition";
         }
 
         [HttpGet("breach")]

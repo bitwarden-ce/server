@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using Bit.Core.Models.Table;
 using Bit.Core;
 using Bit.Core.Utilities;
-using Bit.Core.Services;
 
 namespace Bit.Admin.Controllers
 {
@@ -17,18 +16,15 @@ namespace Bit.Admin.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly ICipherRepository _cipherRepository;
-        private readonly IPaymentService _paymentService;
         private readonly GlobalSettings _globalSettings;
 
         public UsersController(
             IUserRepository userRepository,
             ICipherRepository cipherRepository,
-            IPaymentService paymentService,
             GlobalSettings globalSettings)
         {
             _userRepository = userRepository;
             _cipherRepository = cipherRepository;
-            _paymentService = paymentService;
             _globalSettings = globalSettings;
         }
 
@@ -52,7 +48,7 @@ namespace Bit.Admin.Controllers
                 Email = string.IsNullOrWhiteSpace(email) ? null : email,
                 Page = page,
                 Count = count,
-                Action = _globalSettings.SelfHosted ? "View" : "Edit"
+                Action = "Edit"
             });
         }
 
@@ -68,7 +64,6 @@ namespace Bit.Admin.Controllers
             return View(new UserViewModel(user, ciphers));
         }
 
-        [SelfHosted(NotSelfHostedOnly = true)]
         public async Task<IActionResult> Edit(Guid id)
         {
             var user = await _userRepository.GetByIdAsync(id);
@@ -78,13 +73,11 @@ namespace Bit.Admin.Controllers
             }
 
             var ciphers = await _cipherRepository.GetManyByUserIdAsync(id);
-            var billingInfo = await _paymentService.GetBillingAsync(user);
-            return View(new UserEditModel(user, ciphers, billingInfo, _globalSettings));
+            return View(new UserEditModel(user, ciphers, _globalSettings));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [SelfHosted(NotSelfHostedOnly = true)]
         public async Task<IActionResult> Edit(Guid id, UserEditModel model)
         {
             var user = await _userRepository.GetByIdAsync(id);

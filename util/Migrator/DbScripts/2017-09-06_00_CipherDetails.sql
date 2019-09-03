@@ -47,11 +47,7 @@ BEGIN
 
     SELECT
         C.*,
-        1 [Edit],
-        CASE 
-            WHEN O.[UseTotp] = 1 THEN 1
-            ELSE 0
-        END [OrganizationUseTotp]
+        1 [Edit]
     FROM
         [dbo].[CipherDetails](NULL) C
     LEFT JOIN
@@ -78,11 +74,7 @@ BEGIN
         CASE 
             WHEN C.[UserId] IS NOT NULL OR OU.[AccessAll] = 1 OR CU.[ReadOnly] = 0 OR G.[AccessAll] = 1 OR CG.[ReadOnly] = 0 THEN 1
             ELSE 0
-        END [Edit],
-        CASE 
-            WHEN C.[UserId] IS NULL AND O.[UseTotp] = 1 THEN 1
-            ELSE 0
-        END [OrganizationUseTotp]
+        END [Edit]
     FROM
         [dbo].[CipherDetails](@UserId) C
     INNER JOIN
@@ -101,7 +93,6 @@ BEGIN
         [dbo].[CollectionGroup] CG ON G.[AccessAll] = 0 AND CG.[CollectionId] = CC.[CollectionId] AND CG.[GroupId] = GU.[GroupId]
     WHERE
         OU.[Status] = 2 -- 2 = Confirmed
-        AND O.[Enabled] = 1
         AND (
             OU.[AccessAll] = 1
             OR CU.[CollectionId] IS NOT NULL
@@ -155,7 +146,6 @@ BEGIN
                 OR (
                     C.[UserId] IS NULL
                     AND OU.[Status] = 2 -- 2 = Confirmed
-                    AND O.[Enabled] = 1
                     AND (
                         OU.[AccessAll] = 1
                         OR CU.[CollectionId] IS NOT NULL

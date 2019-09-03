@@ -1,25 +1,4 @@
-﻿IF COL_LENGTH('[dbo].[Organization]', 'Use2fa') IS NULL
-BEGIN
-    ALTER TABLE
-        [dbo].[Organization]
-    ADD
-        [Use2fa] BIT NULL
-END
-GO
-
-UPDATE
-    [dbo].[Organization]
-SET
-    [Use2fa] = (CASE WHEN [PlanType] = 5 OR [PlanType] = 4 THEN 1 ELSE 0 END)
-GO
-
-ALTER TABLE
-    [dbo].[Organization]
-ALTER COLUMN
-    [Use2fa] BIT NOT NULL
-GO
-
-IF COL_LENGTH('[dbo].[Organization]', 'TwoFactorProviders') IS NULL
+﻿IF COL_LENGTH('[dbo].[Organization]', 'TwoFactorProviders') IS NULL
 BEGIN
     ALTER TABLE
         [dbo].[Organization]
@@ -43,27 +22,7 @@ CREATE PROCEDURE [dbo].[Organization_Create]
     @BusinessAddress3 NVARCHAR(50),
     @BusinessCountry VARCHAR(2),
     @BusinessTaxNumber NVARCHAR(30),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseEvents BIT,
-    @UseTotp BIT,
-    @Use2fa BIT,
-    @SelfHost BIT,
-    @UsersGetPremium BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
     @TwoFactorProviders NVARCHAR(MAX),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -80,27 +39,7 @@ BEGIN
         [BusinessAddress3],
         [BusinessCountry],
         [BusinessTaxNumber],
-        [BillingEmail],
-        [Plan],
-        [PlanType],
-        [Seats],
-        [MaxCollections],
-        [UseGroups],
-        [UseDirectory],
-        [UseEvents],
-        [UseTotp],
-        [Use2fa],
-        [SelfHost],
-        [UsersGetPremium],
-        [Storage],
-        [MaxStorageGb],
-        [Gateway],
-        [GatewayCustomerId],
-        [GatewaySubscriptionId],
-        [Enabled],
-        [LicenseKey],
         [TwoFactorProviders],
-        [ExpirationDate],
         [CreationDate],
         [RevisionDate]
     )
@@ -114,27 +53,7 @@ BEGIN
         @BusinessAddress3,
         @BusinessCountry,
         @BusinessTaxNumber,
-        @BillingEmail,
-        @Plan,
-        @PlanType,
-        @Seats,
-        @MaxCollections,
-        @UseGroups,
-        @UseDirectory,
-        @UseEvents,
-        @UseTotp,
-        @Use2fa,
-        @SelfHost,
-        @UsersGetPremium,
-        @Storage,
-        @MaxStorageGb,
-        @Gateway,
-        @GatewayCustomerId,
-        @GatewaySubscriptionId,
-        @Enabled,
-        @LicenseKey,
         @TwoFactorProviders,
-        @ExpirationDate,
         @CreationDate,
         @RevisionDate
     )
@@ -156,27 +75,7 @@ CREATE PROCEDURE [dbo].[Organization_Update]
     @BusinessAddress3 NVARCHAR(50),
     @BusinessCountry VARCHAR(2),
     @BusinessTaxNumber NVARCHAR(30),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseEvents BIT,
-    @UseTotp BIT,
-    @Use2fa BIT,
-    @SelfHost BIT,
-    @UsersGetPremium BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
     @TwoFactorProviders NVARCHAR(MAX),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -193,27 +92,7 @@ BEGIN
         [BusinessAddress3] = @BusinessAddress3,
         [BusinessCountry] = @BusinessCountry,
         [BusinessTaxNumber] = @BusinessTaxNumber,
-        [BillingEmail] = @BillingEmail,
-        [Plan] = @Plan,
-        [PlanType] = @PlanType,
-        [Seats] = @Seats,
-        [MaxCollections] = @MaxCollections,
-        [UseGroups] = @UseGroups,
-        [UseDirectory] = @UseDirectory,
-        [UseEvents] = @UseEvents,
-        [UseTotp] = @UseTotp,
-        [Use2fa] = @Use2fa,
-        [SelfHost] = @SelfHost,
-        [UsersGetPremium] = @UsersGetPremium,
-        [Storage] = @Storage,
-        [MaxStorageGb] = @MaxStorageGb,
-        [Gateway] = @Gateway,
-        [GatewayCustomerId] = @GatewayCustomerId,
-        [GatewaySubscriptionId] = @GatewaySubscriptionId,
-        [Enabled] = @Enabled,
-        [LicenseKey] = @LicenseKey,
         [TwoFactorProviders] = @TwoFactorProviders,
-        [ExpirationDate] = @ExpirationDate,
         [CreationDate] = @CreationDate,
         [RevisionDate] = @RevisionDate
     WHERE
@@ -233,16 +112,7 @@ BEGIN
     SET NOCOUNT ON
 
     SELECT
-        [Id],
-        [UseEvents],
-        [Use2fa],
-        CASE 
-        WHEN [Use2fa] = 1 AND [TwoFactorProviders] IS NOT NULL AND [TwoFactorProviders] != '{}' THEN
-            1
-        ELSE
-            0
-        END AS [Using2fa],
-        [Enabled]
+        [Id]
     FROM
         [dbo].[Organization]
 END
@@ -274,17 +144,6 @@ SELECT
     OU.[UserId],
     OU.[OrganizationId],
     O.[Name],
-    O.[Enabled],
-    O.[UseGroups],
-    O.[UseDirectory],
-    O.[UseEvents],
-    O.[UseTotp],
-    O.[Use2fa],
-    O.[SelfHost],
-    O.[UsersGetPremium],
-    O.[Seats],
-    O.[MaxCollections],
-    O.[MaxStorageGb],
     OU.[Key],
     OU.[Status],
     OU.[Type]

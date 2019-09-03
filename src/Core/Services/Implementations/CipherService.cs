@@ -124,7 +124,6 @@ namespace Bit.Core.Services
                 if(cipher.OrganizationId.HasValue)
                 {
                     var org = await _organizationRepository.GetByIdAsync(cipher.OrganizationId.Value);
-                    cipher.OrganizationUseTotp = org.UseTotp;
                 }
 
                 // push
@@ -158,37 +157,7 @@ namespace Bit.Core.Services
                 throw new BadRequestException("No data to attach.");
             }
 
-            var storageBytesRemaining = 0L;
-            if(cipher.UserId.HasValue)
-            {
-                var user = await _userRepository.GetByIdAsync(cipher.UserId.Value);
-                if(!(await _userService.CanAccessPremium(user)))
-                {
-                    throw new BadRequestException("You must have premium status to use attachments.");
-                }
-
-                if(user.Premium)
-                {
-                    storageBytesRemaining = user.StorageBytesRemaining();
-                }
-                else
-                {
-                    // Users that get access to file storage/premium from their organization get the default
-                    // 1 GB max storage.
-                    storageBytesRemaining = user.StorageBytesRemaining(
-                        _globalSettings.SelfHosted ? (short)10240 : (short)1);
-                }
-            }
-            else if(cipher.OrganizationId.HasValue)
-            {
-                var org = await _organizationRepository.GetByIdAsync(cipher.OrganizationId.Value);
-                if(!org.MaxStorageGb.HasValue)
-                {
-                    throw new BadRequestException("This organization cannot use attachments.");
-                }
-
-                storageBytesRemaining = org.StorageBytesRemaining();
-            }
+            var storageBytesRemaining = 10240L;
 
             if(storageBytesRemaining < requestLength)
             {
@@ -249,18 +218,6 @@ namespace Bit.Core.Services
                 if(cipher.OrganizationId.HasValue)
                 {
                     throw new BadRequestException("Cipher belongs to an organization already.");
-                }
-
-                var org = await _organizationRepository.GetByIdAsync(organizationId);
-                if(org == null || !org.MaxStorageGb.HasValue)
-                {
-                    throw new BadRequestException("This organization cannot use attachments.");
-                }
-
-                var storageBytesRemaining = org.StorageBytesRemaining();
-                if(storageBytesRemaining < requestLength)
-                {
-                    throw new BadRequestException("Not enough storage available for this organization.");
                 }
 
                 await _attachmentStorageService.UploadShareAttachmentAsync(stream, cipher.Id, organizationId,
@@ -408,19 +365,7 @@ namespace Bit.Core.Services
                 {
                     throw new NotFoundException();
                 }
-
-                var org = await _organizationRepository.GetByIdAsync(organizationId);
-                if(hasAttachments && !org.MaxStorageGb.HasValue)
-                {
-                    throw new BadRequestException("This organization cannot use attachments.");
-                }
-
-                var storageAdjustment = attachments?.Sum(a => a.Value.Size) ?? 0;
-                if(org.StorageBytesRemaining() < storageAdjustment)
-                {
-                    throw new BadRequestException("Not enough storage available for this organization.");
-                }
-
+                
                 // Sproc will not save this UserId on the cipher. It is used limit scope of the collectionIds.
                 cipher.UserId = sharingUserId;
                 cipher.OrganizationId = organizationId;
@@ -462,13 +407,7 @@ namespace Bit.Core.Services
                 {
                     throw;
                 }
-
-                if(updatedCipher)
-                {
-                    await _userRepository.UpdateStorageAsync(sharingUserId);
-                    await _organizationRepository.UpdateStorageAsync(organizationId);
-                }
-
+                
                 foreach(var attachment in attachments.Where(a => a.Key == null))
                 {
                     await _attachmentStorageService.RollbackShareAttachmentAsync(cipher.Id, organizationId,
@@ -612,20 +551,6 @@ namespace Bit.Core.Services
             IEnumerable<KeyValuePair<int, int>> collectionRelationships,
             Guid importingUserId)
         {
-            if(collections.Count > 0)
-            {
-                var org = await _organizationRepository.GetByIdAsync(collections[0].OrganizationId);
-                if(org != null && org.MaxCollections.HasValue)
-                {
-                    var collectionCount = await _collectionRepository.GetCountByOrganizationIdAsync(org.Id);
-                    if(org.MaxCollections.Value < (collectionCount + collections.Count))
-                    {
-                        throw new BadRequestException("This organization can only have a maximum of " +
-                            $"{org.MaxCollections.Value} collections.");
-                    }
-                }
-            }
-
             // Init. ids for ciphers
             foreach(var cipher in ciphers)
             {

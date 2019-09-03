@@ -1,25 +1,4 @@
-﻿IF COL_LENGTH('[dbo].[Organization]', 'UseEvents') IS NULL
-BEGIN
-    ALTER TABLE
-        [dbo].[Organization]
-    ADD
-        [UseEvents] BIT NULL
-END
-GO
-
-UPDATE
-    [dbo].[Organization]
-SET
-    [UseEvents] = (CASE WHEN [PlanType] = 5 OR [PlanType] = 4 THEN 1 ELSE 0 END)
-GO
-
-ALTER TABLE
-    [dbo].[Organization]
-ALTER COLUMN
-    [UseEvents] BIT NOT NULL
-GO
-
-IF OBJECT_ID('[dbo].[Organization_Create]') IS NOT NULL
+﻿IF OBJECT_ID('[dbo].[Organization_Create]') IS NOT NULL
 BEGIN
     DROP PROCEDURE [dbo].[Organization_Create]
 END
@@ -34,25 +13,6 @@ CREATE PROCEDURE [dbo].[Organization_Create]
     @BusinessAddress3 NVARCHAR(50),
     @BusinessCountry VARCHAR(2),
     @BusinessTaxNumber NVARCHAR(30),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseEvents BIT,
-    @UseTotp BIT,
-    @SelfHost BIT,
-    @UsersGetPremium BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -69,25 +29,6 @@ BEGIN
         [BusinessAddress3],
         [BusinessCountry],
         [BusinessTaxNumber],
-        [BillingEmail],
-        [Plan],
-        [PlanType],
-        [Seats],
-        [MaxCollections],
-        [UseGroups],
-        [UseDirectory],
-        [UseEvents],
-        [UseTotp],
-        [SelfHost],
-        [UsersGetPremium],
-        [Storage],
-        [MaxStorageGb],
-        [Gateway],
-        [GatewayCustomerId],
-        [GatewaySubscriptionId],
-        [Enabled],
-        [LicenseKey],
-        [ExpirationDate],
         [CreationDate],
         [RevisionDate]
     )
@@ -101,25 +42,6 @@ BEGIN
         @BusinessAddress3,
         @BusinessCountry,
         @BusinessTaxNumber,
-        @BillingEmail,
-        @Plan,
-        @PlanType,
-        @Seats,
-        @MaxCollections,
-        @UseGroups,
-        @UseDirectory,
-        @UseEvents,
-        @UseTotp,
-        @SelfHost,
-        @UsersGetPremium,
-        @Storage,
-        @MaxStorageGb,
-        @Gateway,
-        @GatewayCustomerId,
-        @GatewaySubscriptionId,
-        @Enabled,
-        @LicenseKey,
-        @ExpirationDate,
         @CreationDate,
         @RevisionDate
     )
@@ -141,25 +63,6 @@ CREATE PROCEDURE [dbo].[Organization_Update]
     @BusinessAddress3 NVARCHAR(50),
     @BusinessCountry VARCHAR(2),
     @BusinessTaxNumber NVARCHAR(30),
-    @BillingEmail NVARCHAR(50),
-    @Plan NVARCHAR(50),
-    @PlanType TINYINT,
-    @Seats SMALLINT,
-    @MaxCollections SMALLINT,
-    @UseGroups BIT,
-    @UseDirectory BIT,
-    @UseEvents BIT,
-    @UseTotp BIT,
-    @SelfHost BIT,
-    @UsersGetPremium BIT,
-    @Storage BIGINT,
-    @MaxStorageGb SMALLINT,
-    @Gateway TINYINT,
-    @GatewayCustomerId VARCHAR(50),
-    @GatewaySubscriptionId VARCHAR(50),
-    @Enabled BIT,
-    @LicenseKey VARCHAR(100),
-    @ExpirationDate DATETIME2(7),
     @CreationDate DATETIME2(7),
     @RevisionDate DATETIME2(7)
 AS
@@ -176,49 +79,10 @@ BEGIN
         [BusinessAddress3] = @BusinessAddress3,
         [BusinessCountry] = @BusinessCountry,
         [BusinessTaxNumber] = @BusinessTaxNumber,
-        [BillingEmail] = @BillingEmail,
-        [Plan] = @Plan,
-        [PlanType] = @PlanType,
-        [Seats] = @Seats,
-        [MaxCollections] = @MaxCollections,
-        [UseGroups] = @UseGroups,
-        [UseDirectory] = @UseDirectory,
-        [UseEvents] = @UseEvents,
-        [UseTotp] = @UseTotp,
-        [SelfHost] = @SelfHost,
-        [UsersGetPremium] = @UsersGetPremium,
-        [Storage] = @Storage,
-        [MaxStorageGb] = @MaxStorageGb,
-        [Gateway] = @Gateway,
-        [GatewayCustomerId] = @GatewayCustomerId,
-        [GatewaySubscriptionId] = @GatewaySubscriptionId,
-        [Enabled] = @Enabled,
-        [LicenseKey] = @LicenseKey,
-        [ExpirationDate] = @ExpirationDate,
         [CreationDate] = @CreationDate,
         [RevisionDate] = @RevisionDate
     WHERE
         [Id] = @Id
-END
-GO
-
-IF OBJECT_ID('[dbo].[Organization_ReadAbilities]') IS NULL
-BEGIN
-    EXEC('CREATE PROCEDURE [dbo].[Organization_ReadAbilities] AS BEGIN SET NOCOUNT ON; END')
-END
-GO
-
-ALTER PROCEDURE [dbo].[Organization_ReadAbilities]
-AS
-BEGIN
-    SET NOCOUNT ON
-
-    SELECT
-        [Id],
-        [UseEvents],
-        [Enabled]
-    FROM
-        [dbo].[Organization]
 END
 GO
 
@@ -248,16 +112,6 @@ SELECT
     OU.[UserId],
     OU.[OrganizationId],
     O.[Name],
-    O.[Enabled],
-    O.[UseGroups],
-    O.[UseDirectory],
-    O.[UseEvents],
-    O.[UseTotp],
-    O.[SelfHost],
-    O.[UsersGetPremium],
-    O.[Seats],
-    O.[MaxCollections],
-    O.[MaxStorageGb],
     OU.[Key],
     OU.[Status],
     OU.[Type]

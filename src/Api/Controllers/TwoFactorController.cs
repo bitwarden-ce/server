@@ -80,7 +80,7 @@ namespace Bit.Api.Controllers
         [HttpPost("get-authenticator")]
         public async Task<TwoFactorAuthenticatorResponseModel> GetAuthenticator([FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var response = new TwoFactorAuthenticatorResponseModel(user);
             return response;
         }
@@ -90,7 +90,7 @@ namespace Bit.Api.Controllers
         public async Task<TwoFactorAuthenticatorResponseModel> PutAuthenticator(
             [FromBody]UpdateTwoFactorAuthenticatorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
             model.ToUser(user);
 
             if(!await _userManager.VerifyTwoFactorTokenAsync(user,
@@ -108,7 +108,7 @@ namespace Bit.Api.Controllers
         [HttpPost("get-yubikey")]
         public async Task<TwoFactorYubiKeyResponseModel> GetYubiKey([FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var response = new TwoFactorYubiKeyResponseModel(user);
             return response;
         }
@@ -117,7 +117,7 @@ namespace Bit.Api.Controllers
         [HttpPost("yubikey")]
         public async Task<TwoFactorYubiKeyResponseModel> PutYubiKey([FromBody]UpdateTwoFactorYubicoOtpRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             model.ToUser(user);
 
             await ValidateYubiKeyAsync(user, nameof(model.Key1), model.Key1);
@@ -134,7 +134,7 @@ namespace Bit.Api.Controllers
         [HttpPost("get-duo")]
         public async Task<TwoFactorDuoResponseModel> GetDuo([FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var response = new TwoFactorDuoResponseModel(user);
             return response;
         }
@@ -143,7 +143,7 @@ namespace Bit.Api.Controllers
         [HttpPost("duo")]
         public async Task<TwoFactorDuoResponseModel> PutDuo([FromBody]UpdateTwoFactorDuoRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             try
             {
                 var duoApi = new DuoApi(model.IntegrationKey, model.SecretKey, model.Host);
@@ -164,7 +164,7 @@ namespace Bit.Api.Controllers
         public async Task<TwoFactorDuoResponseModel> GetOrganizationDuo(string id,
             [FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
 
             var orgIdGuid = new Guid(id);
             if(!_currentContext.OrganizationAdmin(orgIdGuid))
@@ -187,7 +187,7 @@ namespace Bit.Api.Controllers
         public async Task<TwoFactorDuoResponseModel> PutOrganizationDuo(string id,
             [FromBody]UpdateTwoFactorDuoRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
 
             var orgIdGuid = new Guid(id);
             if(!_currentContext.OrganizationAdmin(orgIdGuid))
@@ -221,7 +221,7 @@ namespace Bit.Api.Controllers
         [HttpPost("get-u2f")]
         public async Task<TwoFactorU2fResponseModel> GetU2f([FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var response = new TwoFactorU2fResponseModel(user);
             return response;
         }
@@ -230,7 +230,7 @@ namespace Bit.Api.Controllers
         public async Task<TwoFactorU2fResponseModel.ChallengeModel> GetU2fChallenge(
             [FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var reg = await _userService.StartU2fRegistrationAsync(user);
             var challenge = new TwoFactorU2fResponseModel.ChallengeModel(user, reg);
             return challenge;
@@ -240,7 +240,7 @@ namespace Bit.Api.Controllers
         [HttpPost("u2f")]
         public async Task<TwoFactorU2fResponseModel> PutU2f([FromBody]TwoFactorU2fRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var success = await _userService.CompleteU2fRegistrationAsync(
                 user, model.Id.Value, model.Name, model.DeviceResponse);
             if(!success)
@@ -254,7 +254,7 @@ namespace Bit.Api.Controllers
         [HttpDelete("u2f")]
         public async Task<TwoFactorU2fResponseModel> DeleteU2f([FromBody]TwoFactorU2fDeleteRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, true);
+            var user = await CheckAsync(model.MasterPasswordHash);
             await _userService.DeleteU2fKeyAsync(user, model.Id.Value);
             var response = new TwoFactorU2fResponseModel(user);
             return response;
@@ -263,7 +263,7 @@ namespace Bit.Api.Controllers
         [HttpPost("get-email")]
         public async Task<TwoFactorEmailResponseModel> GetEmail([FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var response = new TwoFactorEmailResponseModel(user);
             return response;
         }
@@ -271,7 +271,7 @@ namespace Bit.Api.Controllers
         [HttpPost("send-email")]
         public async Task SendEmail([FromBody]TwoFactorEmailRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
             model.ToUser(user);
             await _userService.SendTwoFactorEmailAsync(user);
         }
@@ -298,7 +298,7 @@ namespace Bit.Api.Controllers
         [HttpPost("email")]
         public async Task<TwoFactorEmailResponseModel> PutEmail([FromBody]UpdateTwoFactorEmailRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
             model.ToUser(user);
 
             if(!await _userManager.VerifyTwoFactorTokenAsync(user,
@@ -317,7 +317,7 @@ namespace Bit.Api.Controllers
         [HttpPost("disable")]
         public async Task<TwoFactorProviderResponseModel> PutDisable([FromBody]TwoFactorProviderRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
             await _userService.DisableTwoFactorProviderAsync(user, model.Type.Value);
             var response = new TwoFactorProviderResponseModel(model.Type.Value, user);
             return response;
@@ -328,7 +328,7 @@ namespace Bit.Api.Controllers
         public async Task<TwoFactorProviderResponseModel> PutOrganizationDisable(string id,
             [FromBody]TwoFactorProviderRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
 
             var orgIdGuid = new Guid(id);
             if(!_currentContext.OrganizationAdmin(orgIdGuid))
@@ -350,7 +350,7 @@ namespace Bit.Api.Controllers
         [HttpPost("get-recover")]
         public async Task<TwoFactorRecoverResponseModel> GetRecover([FromBody]TwoFactorRequestModel model)
         {
-            var user = await CheckAsync(model.MasterPasswordHash, false);
+            var user = await CheckAsync(model.MasterPasswordHash);
             var response = new TwoFactorRecoverResponseModel(user);
             return response;
         }
@@ -366,7 +366,7 @@ namespace Bit.Api.Controllers
             }
         }
 
-        private async Task<User> CheckAsync(string masterPasswordHash, bool premium)
+        private async Task<User> CheckAsync(string masterPasswordHash)
         {
             var user = await _userService.GetUserByPrincipalAsync(User);
             if(user == null)
@@ -378,11 +378,6 @@ namespace Bit.Api.Controllers
             {
                 await Task.Delay(2000);
                 throw new BadRequestException("MasterPasswordHash", "Invalid password.");
-            }
-
-            if(premium && !(await _userService.CanAccessPremium(user)))
-            {
-                throw new BadRequestException("Premium status is required.");
             }
 
             return user;

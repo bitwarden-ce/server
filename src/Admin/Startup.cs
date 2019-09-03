@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using Bit.Admin.Identity;
 using Bit.Core;
 using Bit.Core.Identity;
 using Bit.Core.Utilities;
@@ -37,9 +38,6 @@ namespace Bit.Admin
             // Data Protection
             services.AddCustomDataProtectionServices(Environment, globalSettings);
 
-            // Stripe Billing
-            StripeConfiguration.ApiKey = globalSettings.StripeApiKey;
-
             // Repositories
             services.AddSqlServerRepositories(globalSettings);
 
@@ -48,17 +46,15 @@ namespace Bit.Admin
 
             // Identity
             services.AddPasswordlessIdentityServices<ReadOnlyEnvIdentityUserStore>(globalSettings);
+            services.AddScoped<BypassSigninManager>();
             services.Configure<SecurityStampValidatorOptions>(options =>
             {
                 options.ValidationInterval = TimeSpan.FromMinutes(5);
             });
-            if(globalSettings.SelfHosted)
+            services.ConfigureApplicationCookie(options =>
             {
-                services.ConfigureApplicationCookie(options =>
-                {
-                    options.Cookie.Path = "/admin";
-                });
-            }
+                options.Cookie.Path = "/admin";
+            });
 
             // Services
             services.AddBaseServices();
@@ -74,21 +70,7 @@ namespace Bit.Admin
             // Jobs service
             Jobs.JobsHostedService.AddJobsServices(services);
             services.AddHostedService<Jobs.JobsHostedService>();
-            if(globalSettings.SelfHosted)
-            {
-                services.AddHostedService<HostedServices.DatabaseMigrationHostedService>();
-            }
-            else
-            {
-                if(CoreHelpers.SettingHasValue(globalSettings.Storage.ConnectionString))
-                {
-                    services.AddHostedService<HostedServices.AzureQueueBlockIpHostedService>();
-                }
-                else if(CoreHelpers.SettingHasValue(globalSettings.Amazon?.AccessKeySecret))
-                {
-                    services.AddHostedService<HostedServices.AmazonSqsBlockIpHostedService>();
-                }
-            }
+            services.AddHostedService<HostedServices.DatabaseMigrationHostedService>();
         }
 
         public void Configure(
@@ -98,12 +80,9 @@ namespace Bit.Admin
             GlobalSettings globalSettings)
         {
             app.UseSerilog(env, appLifetime, globalSettings);
-
-            if(globalSettings.SelfHosted)
-            {
-                app.UsePathBase("/admin");
-                app.UseForwardedHeaders(globalSettings);
-            }
+            
+            app.UsePathBase("/admin");
+            app.UseForwardedHeaders(globalSettings);
 
             if(env.IsDevelopment())
             {

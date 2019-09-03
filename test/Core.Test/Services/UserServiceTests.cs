@@ -32,11 +32,8 @@ namespace Bit.Core.Test.Services
         private readonly IdentityErrorDescriber _errors;
         private readonly IServiceProvider _services;
         private readonly ILogger<UserManager<User>> _logger;
-        private readonly ILicensingService _licenseService;
         private readonly IEventService _eventService;
-        private readonly IApplicationCacheService _applicationCacheService;
         private readonly IDataProtectionProvider _dataProtectionProvider;
-        private readonly IPaymentService _paymentService;
         private readonly CurrentContext _currentContext;
         private readonly GlobalSettings _globalSettings;
 
@@ -58,11 +55,8 @@ namespace Bit.Core.Test.Services
             _errors = new IdentityErrorDescriber();
             _services = Substitute.For<IServiceProvider>();
             _logger = Substitute.For<ILogger<UserManager<User>>>();
-            _licenseService = Substitute.For<ILicensingService>();
             _eventService = Substitute.For<IEventService>();
-            _applicationCacheService = Substitute.For<IApplicationCacheService>();
             _dataProtectionProvider = Substitute.For<IDataProtectionProvider>();
-            _paymentService = Substitute.For<IPaymentService>();
             _currentContext = new CurrentContext();
             _globalSettings = new GlobalSettings();
 
@@ -83,11 +77,8 @@ namespace Bit.Core.Test.Services
                 _errors,
                 _services,
                 _logger,
-                _licenseService,
                 _eventService,
-                _applicationCacheService,
                 _dataProtectionProvider,
-                _paymentService,
                 _currentContext,
                 _globalSettings
             );
