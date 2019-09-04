@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using Org.BouncyCastle.Asn1.Pkcs;
 
 namespace Bit.Setup
 {
     public class NginxConfigBuilder
     {
-        private const string ConfFile = "/bitwarden/nginx/default.conf";
         private const string ContentSecurityPolicy =
             "default-src 'self'; style-src 'self' 'unsafe-inline'; " +
             "img-src 'self' data: https://haveibeenpwned.com https://www.gravatar.com; " +
@@ -16,6 +16,11 @@ namespace Bit.Setup
 
         private readonly Context _context;
 
+        private string ConfFile
+        {
+            get { return $"{_context.DestDir}/nginx/default.conf"; }
+        }
+
         public NginxConfigBuilder(Context context)
         {
             _context = context;
@@ -24,23 +29,23 @@ namespace Bit.Setup
         public void BuildForInstaller()
         {
             var model = new TemplateModel(_context);
-            if(model.Ssl && !_context.Config.SslManagedLetsEncrypt)
+            if(model.Ssl && !_context.Config.Ssl.ManagedLetsEncrypt)
             {
                 var sslPath = _context.Install.SelfSignedCert ?
                     $"/etc/ssl/self/{model.Domain}" : $"/etc/ssl/{model.Domain}";
-                _context.Config.SslCertificatePath = model.CertificatePath =
-                    string.Concat(sslPath, "/", "certificate.crt");
-                _context.Config.SslKeyPath = model.KeyPath =
-                    string.Concat(sslPath, "/", "private.key");
+                _context.Config.Ssl.CertificatePath = model.CertificatePath =
+                    Path.Join(sslPath, "certificate.crt");
+                _context.Config.Ssl.KeyPath = model.KeyPath =
+                    Path.Join(sslPath, "private.key");
                 if(_context.Install.Trusted)
                 {
-                    _context.Config.SslCaPath = model.CaPath =
-                        string.Concat(sslPath, "/", "ca.crt");
+                    _context.Config.Ssl.CaPath = model.CaPath =
+                        Path.Join(sslPath, "ca.crt");
                 }
                 if(_context.Install.DiffieHellman)
                 {
-                    _context.Config.SslDiffieHellmanPath = model.DiffieHellmanPath =
-                        string.Concat(sslPath, "/", "dhparam.pem");
+                    _context.Config.Ssl.DiffieHellmanPath = model.DiffieHellmanPath =
+                        Path.Join(sslPath, "dhparam.pem");
                 }
             }
             Build(model);
@@ -54,9 +59,9 @@ namespace Bit.Setup
 
         private void Build(TemplateModel model)
         {
-            Directory.CreateDirectory("/bitwarden/nginx/");
+            Directory.CreateDirectory($"{_context.DestDir}/nginx");
             Helpers.WriteLine(_context, "Building nginx config.");
-            if(!_context.Config.GenerateNginxConfig)
+            if(!_context.Config.Nginx.Enable)
             {
                 Helpers.WriteLine(_context, "...skipped");
                 return;
@@ -75,32 +80,32 @@ namespace Bit.Setup
 
             public TemplateModel(Context context)
             {
-                Ssl = context.Config.Ssl;
+                Ssl = context.Config.SslEnabled;
                 Domain = context.Config.Domain;
                 Url = context.Config.Url;
-                RealIps = context.Config.RealIps;
+                RealIps = context.Config.Nginx.RealIps;
 
                 if(Ssl)
                 {
-                    if(context.Config.SslManagedLetsEncrypt)
+                    if(context.Config.Ssl.ManagedLetsEncrypt)
                     {
                         var sslPath = $"/etc/letsencrypt/live/{Domain}";
-                        CertificatePath = CaPath = string.Concat(sslPath, "/", "fullchain.pem");
-                        KeyPath = string.Concat(sslPath, "/", "privkey.pem");
-                        DiffieHellmanPath = string.Concat(sslPath, "/", "dhparam.pem");
+                        CertificatePath = CaPath = Path.Join(sslPath, "fullchain.pem");
+                        KeyPath = Path.Join(sslPath, "privkey.pem");
+                        DiffieHellmanPath = Path.Join(sslPath, "dhparam.pem");
                     }
                     else
                     {
-                        CertificatePath = context.Config.SslCertificatePath;
-                        KeyPath = context.Config.SslKeyPath;
-                        CaPath = context.Config.SslCaPath;
-                        DiffieHellmanPath = context.Config.SslDiffieHellmanPath;
+                        CertificatePath = context.Config.Ssl.CertificatePath;
+                        KeyPath = context.Config.Ssl.KeyPath;
+                        CaPath = context.Config.Ssl.CaPath;
+                        DiffieHellmanPath = context.Config.Ssl.DiffieHellmanPath;
                     }
                 }
 
-                if(!string.IsNullOrWhiteSpace(context.Config.SslCiphersuites))
+                if(!string.IsNullOrWhiteSpace(context.Config.Nginx.SslCiphersuites))
                 {
-                    SslCiphers = context.Config.SslCiphersuites;
+                    SslCiphers = context.Config.Nginx.SslCiphersuites;
                 }
                 else
                 {
@@ -110,9 +115,9 @@ namespace Bit.Setup
                         "ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256";
                 }
 
-                if(!string.IsNullOrWhiteSpace(context.Config.SslVersions))
+                if(!string.IsNullOrWhiteSpace(context.Config.Nginx.SslVersions))
                 {
-                    SslProtocols = context.Config.SslVersions;
+                    SslProtocols = context.Config.Nginx.SslVersions;
                 }
                 else
                 {
@@ -129,7 +134,6 @@ namespace Bit.Setup
             public string DiffieHellmanPath { get; set; }
             public string SslCiphers { get; set; }
             public string SslProtocols { get; set; }
-            public string ContentSecurityPolicy => string.Format(NginxConfigBuilder.ContentSecurityPolicy, Domain);
             public List<string> RealIps { get; set; }
         }
     }

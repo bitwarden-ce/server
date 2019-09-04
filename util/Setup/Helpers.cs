@@ -9,14 +9,14 @@ namespace Bit.Setup
 {
     public static class Helpers
     {
-        public static string GetValueFromEnvFile(string envFile, string key)
+        public static string GetValueFromEnvFile(Context context, string envFile, string key)
         {
-            if(!File.Exists($"/bitwarden/env/{envFile}.override.env"))
+            if(!File.Exists($"{context.DestDir}/env/{envFile}.override.env"))
             {
                 return null;
             }
 
-            var lines = File.ReadAllLines($"/bitwarden/env/{envFile}.override.env");
+            var lines = File.ReadAllLines($"{context.DestDir}/env/{envFile}.override.env");
             foreach(var line in lines)
             {
                 if(line.StartsWith($"{key}="))

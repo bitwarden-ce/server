@@ -20,9 +20,9 @@ namespace Bit.Setup
             };
 
             Helpers.WriteLine(_context, "Building FIDO U2F app id.");
-            Directory.CreateDirectory("/bitwarden/web/");
+            Directory.CreateDirectory($"{_context.DestDir}/web");
             var template = Helpers.ReadTemplate("AppId");
-            using(var sw = File.CreateText("/bitwarden/web/app-id.json"))
+            using(var sw = File.CreateText($"{_context.DestDir}/web/app-id.json"))
             {
                 sw.Write(template(model));
             }

@@ -14,7 +14,7 @@ namespace Bit.Setup
 
         public void BuildForInstaller()
         {
-            _context.Config.DatabaseDockerVolume = _context.HostOS == "mac";
+            _context.Config.Compose.DatabaseDockerVolume = _context.HostOS == "mac";
             Build();
         }
 
@@ -25,9 +25,9 @@ namespace Bit.Setup
 
         private void Build()
         {
-            Directory.CreateDirectory("/bitwarden/docker/");
+            Directory.CreateDirectory($"{_context.DestDir}/docker/");
             Helpers.WriteLine(_context, "Building docker-compose.yml.");
-            if(!_context.Config.GenerateComposeConfig)
+            if(!_context.Config.Compose.Enable)
             {
                 Helpers.WriteLine(_context, "...skipped");
                 return;
@@ -35,7 +35,7 @@ namespace Bit.Setup
 
             var template = Helpers.ReadTemplate("DockerCompose");
             var model = new TemplateModel(_context);
-            using(var sw = File.CreateText("/bitwarden/docker/docker-compose.yml"))
+            using(var sw = File.CreateText($"{_context.DestDir}/docker/docker-compose.yml"))
             {
                 sw.Write(template(model));
             }
@@ -45,13 +45,13 @@ namespace Bit.Setup
         {
             public TemplateModel(Context context)
             {
-                if(!string.IsNullOrWhiteSpace(context.Config.ComposeVersion))
+                if(!string.IsNullOrWhiteSpace(context.Config.Compose.Version))
                 {
-                    ComposeVersion = context.Config.ComposeVersion;
+                    ComposeVersion = context.Config.Compose.Version;
                 }
-                MssqlDataDockerVolume = context.Config.DatabaseDockerVolume;
-                HttpPort = context.Config.HttpPort;
-                HttpsPort = context.Config.HttpsPort;
+                MssqlDataDockerVolume = context.Config.Compose.DatabaseDockerVolume;
+                HttpPort = context.Config.Server.HttpPort;
+                HttpsPort = context.Config.Server.HttpsPort;
                 if(!string.IsNullOrWhiteSpace(context.CoreVersion))
                 {
                     CoreVersion = context.CoreVersion;
@@ -62,13 +62,13 @@ namespace Bit.Setup
                 }
             }
 
-            public string ComposeVersion { get; set; } = "3";
-            public bool MssqlDataDockerVolume { get; set; }
-            public string HttpPort { get; set; }
-            public string HttpsPort { get; set; }
+            public string ComposeVersion { get; } = "3";
+            public bool MssqlDataDockerVolume { get; }
+            public string HttpPort { get; }
+            public string HttpsPort { get; }
             public bool HasPort => !string.IsNullOrWhiteSpace(HttpPort) || !string.IsNullOrWhiteSpace(HttpsPort);
-            public string CoreVersion { get; set; } = "latest";
-            public string WebVersion { get; set; } = "latest";
+            public string CoreVersion { get; } = "latest";
+            public string WebVersion { get; } = "latest";
         }
     }
 }

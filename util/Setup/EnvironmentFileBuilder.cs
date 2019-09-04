@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using Bit.Core.Utilities;
+using Quartz.Xml.JobSchedulingData20;
 
 namespace Bit.Setup
 {
@@ -44,7 +45,7 @@ namespace Bit.Setup
 
         public void BuildForInstaller()
         {
-            Directory.CreateDirectory("/bitwarden/env/");
+            Directory.CreateDirectory($"{_context.DestDir}/env");
             Init();
             Build();
         }
@@ -53,8 +54,8 @@ namespace Bit.Setup
         {
             Init();
             
-            LoadExistingValues(_globalOverrideValues, "/bitwarden/env/global.override.env");
-            LoadExistingValues(_mssqlOverrideValues, "/bitwarden/env/mssql.override.env");
+            LoadExistingValues(_globalOverrideValues, $"{_context.DestDir}/env/global.override.env");
+            LoadExistingValues(_mssqlOverrideValues, $"{_context.DestDir}/env/mssql.override.env");
 
             Update();
             Build();
@@ -62,10 +63,11 @@ namespace Bit.Setup
 
         private void Init()
         {
+            var disableUserRegistration = !_context.Config.Instance.EnableUserRegistration;
             var dbPassword = _context.Stub ? "RANDOM_DATABASE_PASSWORD" : CoreHelpers.SecureRandomString(32);
             var dbConnectionString = new SqlConnectionStringBuilder
             {
-                DataSource = "tcp:mssql,1433",
+                DataSource = $"tcp:{_context.Config.Database.Hostname},1433",
                 InitialCatalog = "vault",
                 UserID = "sa",
                 Password = dbPassword,
@@ -96,17 +98,18 @@ namespace Bit.Setup
                     CoreHelpers.SecureRandomString(64, alpha: true, numeric: true),
                 ["globalSettings__installation__id"] = _context.Install?.InstallationId.ToString(),
                 ["globalSettings__installation__key"] = _context.Install?.InstallationKey,
-                ["globalSettings__yubico__clientId"] = "REPLACE",
-                ["globalSettings__yubico__key"] = "REPLACE",
+                ["globalSettings__yubico__clientId"] = _context.Config.Yubico.ClientId,
+                ["globalSettings__yubico__key"] = _context.Config.Yubico.Key,
                 ["globalSettings__mail__replyToEmail"] = $"no-reply@{_context.Config.Domain}",
-                ["globalSettings__mail__smtp__host"] = "REPLACE",
-                ["globalSettings__mail__smtp__port"] = "587",
-                ["globalSettings__mail__smtp__ssl"] = "false",
-                ["globalSettings__mail__smtp__username"] = "REPLACE",
-                ["globalSettings__mail__smtp__password"] = "REPLACE",
-                ["globalSettings__disableUserRegistration"] = "false",
+                ["globalSettings__mail__smtp__host"] = _context.Config.Smtp.Hostname,
+                ["globalSettings__mail__smtp__port"] = _context.Config.Smtp.Port.ToString(),
+                ["globalSettings__mail__smtp__ssl"] = _context.Config.Smtp.Ssl.ToString().ToLower(),
+                ["globalSettings__mail__smtp__username"] = _context.Config.Smtp.Username,
+                ["globalSettings__mail__smtp__password"] = _context.Config.Smtp.Password,
+                ["globalSettings__disableUserRegistration"] = disableUserRegistration.ToString().ToLower(),
                 ["globalSettings__hibpApiKey"] = "REPLACE",
-                ["adminSettings__admins"] = string.Empty,
+                ["adminSettings__admins"] = string.Join(",",
+                    _context.Config.Instance.Admins.DefaultIfEmpty()),
             };
 
             _mssqlOverrideValues = new Dictionary<string, string>
@@ -157,12 +160,34 @@ namespace Bit.Setup
 
         private void Update()
         {
-            var disableUserRegistration = !_context.Config.EnableUserRegistration;
+            var disableUserRegistration = !_context.Config.Instance.EnableUserRegistration;
+            var dbConnection =
+                new SqlConnectionStringBuilder(_globalOverrideValues["globalSettings__sqlServer__connectionString"]);
+            dbConnection.DataSource = $"tcp:{_context.Config.Database.Hostname},1433";
             
-            _globalOverrideValues["globalSettings__disableUserRegistration"] =
-                disableUserRegistration.ToString().ToLower();
-            _globalOverrideValues["adminSettings__admins"] = string.Join(",",
-                _context.Config.Admins.DefaultIfEmpty());
+            var globalOverrideValues = new Dictionary<string, string>
+            {
+                ["globalSettings__baseServiceUri__vault"] = _context.Config.Url,
+                ["globalSettings__baseServiceUri__api"] = $"{_context.Config.Url}/api",
+                ["globalSettings__baseServiceUri__identity"] = $"{_context.Config.Url}/identity",
+                ["globalSettings__baseServiceUri__admin"] = $"{_context.Config.Url}/admin",
+                ["globalSettings__baseServiceUri__notifications"] = $"{_context.Config.Url}/notifications",
+                ["globalSettings__sqlServer__connectionString"] = dbConnection.ConnectionString,
+                ["globalSettings__identityServer__certificatePassword"] = _context.Install?.IdentityCertPassword,
+                ["globalSettings__yubico__clientId"] = _context.Config.Yubico.ClientId,
+                ["globalSettings__yubico__key"] = _context.Config.Yubico.Key,
+                ["globalSettings__mail__replyToEmail"] = $"no-reply@{_context.Config.Domain}",
+                ["globalSettings__mail__smtp__host"] = _context.Config.Smtp.Hostname,
+                ["globalSettings__mail__smtp__port"] = _context.Config.Smtp.Port.ToString(),
+                ["globalSettings__mail__smtp__ssl"] = _context.Config.Smtp.Ssl.ToString().ToLower(),
+                ["globalSettings__mail__smtp__username"] = _context.Config.Smtp.Username,
+                ["globalSettings__mail__smtp__password"] = _context.Config.Smtp.Password,
+                ["globalSettings__disableUserRegistration"] = disableUserRegistration.ToString().ToLower(),
+                ["globalSettings__hibpApiKey"] = "REPLACE",
+                ["adminSettings__admins"] = string.Join(",",
+                    _context.Config.Instance.Admins.DefaultIfEmpty()),
+            };
+            globalOverrideValues.ToList().ForEach(entry => _globalOverrideValues[entry.Key] = entry.Value);
         }
 
         private void Build()
@@ -170,37 +195,37 @@ namespace Bit.Setup
             var template = Helpers.ReadTemplate("EnvironmentFile");
 
             Helpers.WriteLine(_context, "Building docker environment files.");
-            Directory.CreateDirectory("/bitwarden/docker/");
-            using(var sw = File.CreateText("/bitwarden/docker/global.env"))
+            Directory.CreateDirectory($"{_context.DestDir}/docker/");
+            using(var sw = File.CreateText($"{_context.DestDir}/docker/global.env"))
             {
                 sw.Write(template(new TemplateModel(_globalValues)));
             }
-            Helpers.Exec("chmod 600 /bitwarden/docker/global.env");
+            Helpers.Exec($"chmod 600 {_context.DestDir}/docker/global.env");
 
-            using(var sw = File.CreateText("/bitwarden/docker/mssql.env"))
+            using(var sw = File.CreateText($"{_context.DestDir}/docker/mssql.env"))
             {
                 sw.Write(template(new TemplateModel(_mssqlValues)));
             }
-            Helpers.Exec("chmod 600 /bitwarden/docker/mssql.env");
+            Helpers.Exec($"chmod 600 {_context.DestDir}/docker/mssql.env");
 
             Helpers.WriteLine(_context, "Building docker environment override files.");
-            Directory.CreateDirectory("/bitwarden/env/");
-            using(var sw = File.CreateText("/bitwarden/env/global.override.env"))
+            Directory.CreateDirectory($"{_context.DestDir}/env/");
+            using(var sw = File.CreateText($"{_context.DestDir}/env/global.override.env"))
             {
                 sw.Write(template(new TemplateModel(_globalOverrideValues)));
             }
-            Helpers.Exec("chmod 600 /bitwarden/env/global.override.env");
+            Helpers.Exec($"chmod 600 {_context.DestDir}/env/global.override.env");
 
-            using(var sw = File.CreateText("/bitwarden/env/mssql.override.env"))
+            using(var sw = File.CreateText($"{_context.DestDir}/env/mssql.override.env"))
             {
                 sw.Write(template(new TemplateModel(_mssqlOverrideValues)));
             }
-            Helpers.Exec("chmod 600 /bitwarden/env/mssql.override.env");
+            Helpers.Exec($"chmod 600 {_context.DestDir}/env/mssql.override.env");
 
             // Empty uid env file. Only used on Linux hosts.
-            if(!File.Exists("/bitwarden/env/uid.env"))
+            if(!File.Exists($"{_context.DestDir}/env/uid.env"))
             {
-                using(var sw = File.CreateText("/bitwarden/env/uid.env")) { }
+                using(var sw = File.CreateText($"{_context.DestDir}/env/uid.env")) { }
             }
         }
 

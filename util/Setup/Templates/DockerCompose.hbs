@@ -17,8 +17,7 @@ version: '{{{ComposeVersion}}}'
 
 services:
   mssql:
-    image: bitwarden/mssql:{{{CoreVersion}}}
-    container_name: bitwarden-mssql
+    image: bitwardence/mssql:{{{CoreVersion}}}
     restart: always
     volumes:
 {{#if MssqlDataDockerVolume}}
@@ -34,8 +33,7 @@ services:
       - ../env/mssql.override.env
 
   web:
-    image: bitwarden/web:{{{WebVersion}}}
-    container_name: bitwarden-web
+    image: bitwardence/web:{{{WebVersion}}}
     restart: always
     volumes:
       - ../web:/etc/bitwarden/web
@@ -44,8 +42,7 @@ services:
       - ../env/uid.env
 
   attachments:
-    image: bitwarden/attachments:{{{CoreVersion}}}
-    container_name: bitwarden-attachments
+    image: bitwardence/attachments:{{{CoreVersion}}}
     restart: always
     volumes:
       - ../core/attachments:/etc/bitwarden/core/attachments
@@ -54,8 +51,7 @@ services:
       - ../env/uid.env
 
   api:
-    image: bitwarden/api:{{{CoreVersion}}}
-    container_name: bitwarden-api
+    image: bitwardence/api:{{{CoreVersion}}}
     restart: always
     volumes:
       - ../core:/etc/bitwarden/core
@@ -67,8 +63,7 @@ services:
       - ../env/global.override.env
 
   identity:
-    image: bitwarden/identity:{{{CoreVersion}}}
-    container_name: bitwarden-identity
+    image: bitwardence/identity:{{{CoreVersion}}}
     restart: always
     volumes:
       - ../identity:/etc/bitwarden/identity
@@ -81,8 +76,7 @@ services:
       - ../env/global.override.env
 
   admin:
-    image: bitwarden/admin:{{{CoreVersion}}}
-    container_name: bitwarden-admin
+    image: bitwardence/admin:{{{CoreVersion}}}
     restart: always
     depends_on:
       - mssql
@@ -96,8 +90,7 @@ services:
       - ../env/global.override.env
 
   icons:
-    image: bitwarden/icons:{{{CoreVersion}}}
-    container_name: bitwarden-icons
+    image: bitwardence/icons:{{{CoreVersion}}}
     restart: always
     volumes:
       - ../ca-certificates:/etc/bitwarden/ca-certificates
@@ -107,8 +100,7 @@ services:
       - ../env/uid.env
 
   notifications:
-    image: bitwarden/notifications:{{{CoreVersion}}}
-    container_name: bitwarden-notifications
+    image: bitwardence/notifications:{{{CoreVersion}}}
     restart: always
     volumes:
       - ../ca-certificates:/etc/bitwarden/ca-certificates
@@ -119,8 +111,7 @@ services:
       - ../env/global.override.env
 
   events:
-    image: bitwarden/events:{{{CoreVersion}}}
-    container_name: bitwarden-events
+    image: bitwardence/events:{{{CoreVersion}}}
     restart: always
     volumes:
       - ../ca-certificates:/etc/bitwarden/ca-certificates
@@ -131,8 +122,7 @@ services:
       - ../env/global.override.env
 
   nginx:
-    image: bitwarden/nginx:{{{CoreVersion}}}
-    container_name: bitwarden-nginx
+    image: bitwardence/nginx:{{{CoreVersion}}}
     restart: always
     depends_on:
       - web

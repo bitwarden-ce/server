@@ -42,6 +42,14 @@ namespace Bit.Setup
                 _context.Stub = _context.Parameters["stub"] == "true" ||
                     _context.Parameters["stub"] == "1";
             }
+            if(_context.Parameters.ContainsKey("destdir"))
+            {
+                _context.DestDir = _context.Parameters["destdir"];
+            }
+            if(_context.Parameters.ContainsKey("outputdir"))
+            {
+                _context.OutputDir = _context.Parameters["outputdir"];
+            }
 
             Helpers.WriteLine(_context);
 
@@ -67,19 +75,24 @@ namespace Bit.Setup
         {
             if(_context.Parameters.ContainsKey("letsencrypt"))
             {
-                _context.Config.SslManagedLetsEncrypt =
+                _context.Config.Ssl.ManagedLetsEncrypt =
                     _context.Parameters["letsencrypt"].ToLowerInvariant() == "y";
             }
             if(_context.Parameters.ContainsKey("domain"))
             {
                 _context.Install.Domain = _context.Parameters["domain"].ToLowerInvariant();
+                _context.Config.Domain = _context.Install.Domain;
+            }
+            if(_context.Parameters.ContainsKey("ssl"))
+            {
+                _context.Config.SslEnabled = _context.Parameters["ssl"] == "true" ||
+                                      _context.Parameters["ssl"] == "1";
+                _context.Install.Ssl = _context.Config.SslEnabled;
             }
 
-            if (_context.Parameters.ContainsKey("ssl"))
+            if (_context.Parameters.ContainsKey("dbhost"))
             {
-                _context.Config.Ssl = _context.Parameters["ssl"] == "true" ||
-                                      _context.Parameters["ssl"] == "1";
-                _context.Install.Ssl = _context.Config.Ssl;
+                _context.Config.Database.Hostname = _context.Parameters["dbhost"];
             }
 
             _context.Install.InstallationId = CoreHelpers.GenerateComb();
@@ -87,10 +100,6 @@ namespace Bit.Setup
 
             var certBuilder = new CertBuilder(_context);
             certBuilder.BuildForInstall();
-
-            // Set the URL
-            _context.Config.Url = string.Format("http{0}://{1}",
-                _context.Config.Ssl ? "s" : string.Empty, _context.Install.Domain);
 
             var nginxBuilder = new NginxConfigBuilder(_context);
             nginxBuilder.BuildForInstaller();
@@ -165,7 +174,7 @@ namespace Bit.Setup
             try
             {
                 Helpers.WriteLine(_context, "Migrating database.");
-                var vaultConnectionString = Helpers.GetValueFromEnvFile("global",
+                var vaultConnectionString = Helpers.GetValueFromEnvFile(_context, "global",
                     "globalSettings__sqlServer__connectionString");
                 var migrator = new DbMigrator(vaultConnectionString, null);
                 var success = migrator.MigrateMsSqlDatabase(false);
