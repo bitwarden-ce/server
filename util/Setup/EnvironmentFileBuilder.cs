@@ -175,7 +175,6 @@ namespace Bit.Setup
                 ["globalSettings__baseServiceUri__admin"] = $"{_context.Config.Url}/admin",
                 ["globalSettings__baseServiceUri__notifications"] = $"{_context.Config.Url}/notifications",
                 ["globalSettings__sqlServer__connectionString"] = dbConnectionString,
-                ["globalSettings__identityServer__certificatePassword"] = _context.Install?.IdentityCertPassword,
                 ["globalSettings__yubico__clientId"] = _context.Config.Yubico.ClientId,
                 ["globalSettings__yubico__key"] = _context.Config.Yubico.Key,
                 ["globalSettings__mail__replyToEmail"] = $"no-reply@{_context.Config.Domain}",

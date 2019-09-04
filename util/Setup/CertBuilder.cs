@@ -68,7 +68,7 @@ namespace Bit.Setup
             }
 
             Helpers.WriteLine(_context, "Generating key for IdentityServer.");
-            _context.Install.IdentityCertPassword = CoreHelpers.SecureRandomString(32, alpha: true, numeric: true);
+            _context.Install.IdentityCertPassword = CoreHelpers.SecureRandomString(32);
             Directory.CreateDirectory($"{_context.DestDir}/identity");
             Helpers.Exec("openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout /tmp/bitwarden-identity.key " +
                 "-out /tmp/bitwarden-identity.crt -subj \"/CN=Bitwarden IdentityServer\" -days 10950");
