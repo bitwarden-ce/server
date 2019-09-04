@@ -17,4 +17,4 @@ dotnet publish $DIR/Setup.csproj -c "Release" -o $DIR/obj/Docker/publish
 
 echo -e "\nBuilding docker image"
 docker --version
-docker build -t bitwarden/setup $DIR/.
+docker build -t bitwardence/setup $DIR/.

@@ -12,34 +12,34 @@ then
     echo "Pushing Bitwarden ($TAG)"
     echo "========================"
     
-    docker push bitwarden/api:$TAG
-    docker push bitwarden/identity:$TAG
-    docker push bitwarden/server:$TAG
-    docker push bitwarden/attachments:$TAG
-    docker push bitwarden/icons:$TAG
-    docker push bitwarden/notifications:$TAG
-    docker push bitwarden/events:$TAG
-    docker push bitwarden/admin:$TAG
-    docker push bitwarden/nginx:$TAG
-    docker push bitwarden/mssql:$TAG
-    docker push bitwarden/setup:$TAG
+    docker push bitwardence/api:$TAG
+    docker push bitwardence/identity:$TAG
+    docker push bitwardence/server:$TAG
+    docker push bitwardence/attachments:$TAG
+    docker push bitwardence/icons:$TAG
+    docker push bitwardence/notifications:$TAG
+    docker push bitwardence/events:$TAG
+    docker push bitwardence/admin:$TAG
+    docker push bitwardence/nginx:$TAG
+    docker push bitwardence/mssql:$TAG
+    docker push bitwardence/setup:$TAG
 elif [ $# -gt 1 -a "$1" == "tag" ]
 then
     TAG=$2
     
     echo "Tagging Bitwarden as '$TAG'"
     
-    docker tag bitwarden/api bitwarden/api:$TAG
-    docker tag bitwarden/identity bitwarden/identity:$TAG
-    docker tag bitwarden/server bitwarden/server:$TAG
-    docker tag bitwarden/attachments bitwarden/attachments:$TAG
-    docker tag bitwarden/icons bitwarden/icons:$TAG
-    docker tag bitwarden/notifications bitwarden/notifications:$TAG
-    docker tag bitwarden/events bitwarden/events:$TAG
-    docker tag bitwarden/admin bitwarden/admin:$TAG
-    docker tag bitwarden/nginx bitwarden/nginx:$TAG
-    docker tag bitwarden/mssql bitwarden/mssql:$TAG
-    docker tag bitwarden/setup bitwarden/setup:$TAG
+    docker tag bitwardence/api bitwardence/api:$TAG
+    docker tag bitwardence/identity bitwardence/identity:$TAG
+    docker tag bitwardence/server bitwardence/server:$TAG
+    docker tag bitwardence/attachments bitwardence/attachments:$TAG
+    docker tag bitwardence/icons bitwardence/icons:$TAG
+    docker tag bitwardence/notifications bitwardence/notifications:$TAG
+    docker tag bitwardence/events bitwardence/events:$TAG
+    docker tag bitwardence/admin bitwardence/admin:$TAG
+    docker tag bitwardence/nginx bitwardence/nginx:$TAG
+    docker tag bitwardence/mssql bitwardence/mssql:$TAG
+    docker tag bitwardence/setup bitwardence/setup:$TAG
 else
     echo "Building Bitwarden"
     echo "=================="

@@ -17,4 +17,4 @@ dotnet publish $DIR/Events.csproj -c "Release" -o $DIR/obj/Docker/publish/Events
 
 echo -e "\nBuilding docker image"
 docker --version
-docker build -t bitwarden/events $DIR/.
+docker build -t bitwardence/events $DIR/.

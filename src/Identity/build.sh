@@ -17,4 +17,4 @@ dotnet publish $DIR/Identity.csproj -c "Release" -o $DIR/obj/Docker/publish
 
 echo -e "\nBuilding docker image"
 docker --version
-docker build -t bitwarden/identity $DIR/.
+docker build -t bitwardence/identity $DIR/.
