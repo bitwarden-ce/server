@@ -61,7 +61,7 @@ namespace Bit.Setup
             {
                 Update();
             }
-            else if(_context.Parameters.ContainsKey("regen-identity"))
+            else if(_context.Parameters.ContainsKey("regenidentity"))
             {
                 RegenerateIdentityCertificate();
             }
