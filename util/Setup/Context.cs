@@ -88,15 +88,15 @@ namespace Bit.Setup
                 {
                     var confContent = File.ReadAllText(nginxFile);
                     var selfSigned = confContent.Contains("/etc/ssl/self/");
-                    Config.SslEnabled = confContent.Contains("ssl http2;");
+                    Config.Ssl.Enable = confContent.Contains("ssl http2;");
                     Config.Ssl.ManagedLetsEncrypt = !selfSigned && confContent.Contains("/etc/letsencrypt/live/");
                     var diffieHellman = confContent.Contains("/dhparam.pem;");
                     var trusted = confContent.Contains("ssl_trusted_certificate ");
                     if(Config.Ssl.ManagedLetsEncrypt)
                     {
-                        Config.SslEnabled = true;
+                        Config.Ssl.Enable = true;
                     }
-                    else if(Config.SslEnabled)
+                    else if(Config.Ssl.Enable)
                     {
                         var sslPath = selfSigned ? $"/etc/ssl/self/{Config.Domain}" : $"/etc/ssl/{Config.Domain}";
                         Config.Ssl.CertificatePath = string.Concat(sslPath, "/", "certificate.crt");

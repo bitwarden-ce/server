@@ -17,7 +17,7 @@ namespace Bit.Setup
         {
             if(_context.Stub)
             {
-                _context.Config.SslEnabled = true;
+                _context.Config.Ssl.Enable = true;
                 _context.Install.Trusted = true;
                 _context.Install.SelfSignedCert = false;
                 _context.Install.DiffieHellman = false;
@@ -25,12 +25,12 @@ namespace Bit.Setup
                 return;
             }
 
-            _context.Config.SslEnabled = _context.Config.Ssl.ManagedLetsEncrypt;
+            _context.Config.Ssl.Enable = _context.Config.Ssl.ManagedLetsEncrypt;
 
-            if(!_context.Config.SslEnabled && _context.Install.Ssl == null)
+            if(!_context.Config.Ssl.Enable && _context.Install.Ssl == null)
             {
-                _context.Config.SslEnabled = Helpers.ReadQuestion("Do you have a SSL certificate to use?");
-                if(_context.Config.SslEnabled)
+                _context.Config.Ssl.Enable = Helpers.ReadQuestion("Do you have a SSL certificate to use?");
+                if(_context.Config.Ssl.Enable)
                 {
                     Directory.CreateDirectory($"{_context.DestDir}/ssl/{_context.Install.Domain}/");
                     var message = "Make sure 'certificate.crt' and 'private.key' are provided in the \n" +
@@ -41,7 +41,7 @@ namespace Bit.Setup
                 {
                     Directory.CreateDirectory($"{_context.DestDir}/ssl/self/{_context.Install.Domain}/");
                     Helpers.WriteLine(_context, "Generating self signed SSL certificate.");
-                    _context.Config.SslEnabled = true;
+                    _context.Config.Ssl.Enable = true;
                     _context.Install.Trusted = false;
                     _context.Install.SelfSignedCert = true;
                     Helpers.Exec("openssl req -x509 -newkey rsa:4096 -sha256 -nodes -days 365 " +
@@ -61,7 +61,7 @@ namespace Bit.Setup
                 Helpers.Exec($"openssl dhparam -out " +
                     $"{_context.DestDir}/letsencrypt/live/{_context.Install.Domain}/dhparam.pem 2048");
             }
-            else if(_context.Config.SslEnabled && !_context.Install.SelfSignedCert)
+            else if(_context.Config.Ssl.Enable && !_context.Install.SelfSignedCert)
             {
                 _context.Install.Trusted = Helpers.ReadQuestion("Is this a trusted SSL certificate " +
                     "(requires ca.crt, see docs)?");
@@ -79,14 +79,14 @@ namespace Bit.Setup
 
             Helpers.WriteLine(_context);
 
-            if(!_context.Config.SslEnabled)
+            if(!_context.Config.Ssl.Enable)
             {
                 var message = "You are not using a SSL certificate. Bitwarden requires HTTPS to operate. \n" +
                               "You must front your installation with a HTTPS proxy or the web vault (and \n" +
                               "other Bitwarden apps) will not work properly.";
                 Helpers.ShowBanner(_context, "WARNING", message, ConsoleColor.Yellow);
             }
-            else if(_context.Config.SslEnabled && !_context.Install.Trusted)
+            else if(_context.Config.Ssl.Enable && !_context.Install.Trusted)
             {
                 var message = "You are using an untrusted SSL certificate. This certificate will not be \n" +
                               "trusted by Bitwarden client applications. You must add this certificate to \n" +

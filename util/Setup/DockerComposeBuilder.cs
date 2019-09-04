@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Microsoft.Azure.Amqp.Framing;
 
 namespace Bit.Setup
 {
@@ -60,6 +61,8 @@ namespace Bit.Setup
                 {
                     WebVersion = context.WebVersion;
                 }
+
+                DatabaseName = context.Config.Database.Hostname;
             }
 
             public string ComposeVersion { get; } = "3";
@@ -69,6 +72,7 @@ namespace Bit.Setup
             public bool HasPort => !string.IsNullOrWhiteSpace(HttpPort) || !string.IsNullOrWhiteSpace(HttpsPort);
             public string CoreVersion { get; } = "latest";
             public string WebVersion { get; } = "latest";
+            public string DatabaseName { get; }
         }
     }
 }

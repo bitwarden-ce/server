@@ -80,7 +80,7 @@ namespace Bit.Setup
 
             public TemplateModel(Context context)
             {
-                Ssl = context.Config.SslEnabled;
+                Ssl = context.Config.Ssl.Enable;
                 Domain = context.Config.Domain;
                 Url = context.Config.Url;
                 RealIps = context.Config.Nginx.RealIps;

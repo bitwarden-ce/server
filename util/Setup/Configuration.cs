@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.Serialization;
 using Microsoft.Azure.ServiceBus;
 using YamlDotNet.Serialization;
 
@@ -12,7 +13,7 @@ namespace Bit.Setup
             "command for them to be applied.\n\n" +
 
             "Full Qualified Domain Name to access your vault. (Required)")]
-        public string Domain { get; set; } = "localhost";
+        public string Domain = "localhost";
 
         [Description("General server configuration")]
         public ServerConfig Server = new ServerConfig();
@@ -43,7 +44,7 @@ namespace Bit.Setup
         {
             get
             {
-                var protocol = SslEnabled ? "https" : "http";
+                var protocol = Ssl.Enable ? "https" : "http";
                 return $"{protocol}://{Domain}";
             }
             set
@@ -51,23 +52,8 @@ namespace Bit.Setup
                 if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
                 {
                     Domain = uri.Host;
-                    SslEnabled = uri.Scheme == "https";
+                    Ssl.Enable = uri.Scheme == "https";
                 }
-            }
-        }
-
-        [YamlIgnore]
-        public bool SslEnabled
-        {
-            get { return Ssl != null && Ssl.Enable; }
-            set
-            {
-                if (Ssl == null)
-                {
-                    Ssl = new SslConfig();
-                }
-
-                Ssl.Enable = value;
             }
         }
 
@@ -92,12 +78,11 @@ namespace Bit.Setup
             [Description("Docker compose file version. Leave empty for default.\n" +
                          "Learn more: https://docs.docker.com/compose/compose-file/compose-versioning/")]
             public string Version { get; set; }
-            
-            [Description("Use a docker volume (`mssql_data`) instead of a host-mapped volume for the persisted " +
-                         "database.\n" +
+
+            [Description("Use a docker volume instead of a host-mapped volume for the persisted database.\n" +
                          "WARNING: Changing this value will cause you to lose access to the existing persisted database.\n" +
                          "Learn more: https://docs.docker.com/storage/volumes/")]
-            public bool DatabaseDockerVolume { get; set; }
+            public bool DatabaseDockerVolume { get; set; } = true;
         }
 
         public class NginxConfig
@@ -124,7 +109,7 @@ namespace Bit.Setup
         public class SslConfig
         {
             [Description("Enable SSL.")]
-            public bool Enable = true;
+            public bool Enable { get; set; } = true;
 
             [Description("Installation uses a managed Let's Encrypt certificate.")]
             public bool ManagedLetsEncrypt { get; set; }
@@ -154,34 +139,34 @@ namespace Bit.Setup
         public class DatabaseConfig
         {
             [Description("Database hostname, if needed to customize it.")]
-            public string Hostname = "mssql";
+            public string Hostname { get; set; } = "mssql";
         }
 
         public class SmtpConfig
         {
             [Description("SMTP hostname")]
-            public string Hostname;
+            public string Hostname { get; set; }
 
             [Description("SMTP port")]
             public int Port = 587;
 
             [Description("SMTP username")]
-            public string Username;
+            public string Username { get; set; }
 
             [Description("SMTP password")]
-            public string Password;
+            public string Password { get; set; }
 
             [Description("SMTP use SSL")]
-            public bool Ssl = false;
+            public bool Ssl { get; set; } = false;
         }
 
         public class YubicoConfig
         {
             [Description("Yubico API client ID")]
-            public string ClientId;
+            public string ClientId { get; set; }
 
             [Description("Yubico API key")]
-            public string Key;
+            public string Key { get; set; }
         }
 
         public class InstanceConfig

@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Bit.Core.Utilities;
 using Quartz.Xml.JobSchedulingData20;
 
@@ -161,10 +162,11 @@ namespace Bit.Setup
         private void Update()
         {
             var disableUserRegistration = !_context.Config.Instance.EnableUserRegistration;
-            var dbConnection =
-                new SqlConnectionStringBuilder(_globalOverrideValues["globalSettings__sqlServer__connectionString"]);
-            dbConnection.DataSource = $"tcp:{_context.Config.Database.Hostname},1433";
-            
+            var dbConnectionString = _globalOverrideValues["globalSettings__sqlServer__connectionString"];
+            dbConnectionString = Regex.Replace(dbConnectionString,
+                "Data Source=tcp:[^,]+,1433",
+                $"Data Source=tcp:{_context.Config.Database.Hostname},1433");
+
             var globalOverrideValues = new Dictionary<string, string>
             {
                 ["globalSettings__baseServiceUri__vault"] = _context.Config.Url,
@@ -172,7 +174,7 @@ namespace Bit.Setup
                 ["globalSettings__baseServiceUri__identity"] = $"{_context.Config.Url}/identity",
                 ["globalSettings__baseServiceUri__admin"] = $"{_context.Config.Url}/admin",
                 ["globalSettings__baseServiceUri__notifications"] = $"{_context.Config.Url}/notifications",
-                ["globalSettings__sqlServer__connectionString"] = dbConnection.ConnectionString,
+                ["globalSettings__sqlServer__connectionString"] = dbConnectionString,
                 ["globalSettings__identityServer__certificatePassword"] = _context.Install?.IdentityCertPassword,
                 ["globalSettings__yubico__clientId"] = _context.Config.Yubico.ClientId,
                 ["globalSettings__yubico__key"] = _context.Config.Yubico.Key,

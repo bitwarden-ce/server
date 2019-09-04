@@ -85,12 +85,11 @@ namespace Bit.Setup
             }
             if(_context.Parameters.ContainsKey("ssl"))
             {
-                _context.Config.SslEnabled = _context.Parameters["ssl"] == "true" ||
+                _context.Config.Ssl.Enable = _context.Parameters["ssl"] == "true" ||
                                       _context.Parameters["ssl"] == "1";
-                _context.Install.Ssl = _context.Config.SslEnabled;
+                _context.Install.Ssl = _context.Config.Ssl.Enable;
             }
-
-            if (_context.Parameters.ContainsKey("dbhost"))
+            if(_context.Parameters.ContainsKey("dbhost"))
             {
                 _context.Config.Database.Hostname = _context.Parameters["dbhost"];
             }
