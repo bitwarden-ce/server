@@ -61,6 +61,10 @@ namespace Bit.Setup
             {
                 Update();
             }
+            else if(_context.Parameters.ContainsKey("regen-identity"))
+            {
+                RegenerateIdentityCertificate();
+            }
             else if(_context.Parameters.ContainsKey("printenv"))
             {
                 PrintEnvironment();
@@ -144,6 +148,21 @@ namespace Bit.Setup
             {
                 RebuildConfigs();
             }
+        }
+
+        private static void RegenerateIdentityCertificate()
+        {
+            _context.LoadConfiguration();
+            
+            var certBuilder = new CertBuilder(_context);
+            certBuilder.GenerateIdentityCertificate();
+
+            var fixes = new Dictionary<String, String>
+            {
+                ["globalSettings__identityServer__certificatePassword"] = _context.Install?.IdentityCertPassword,
+            };
+            var environmentFileBuilder = new EnvironmentFileBuilder(_context);
+            environmentFileBuilder.BuildForFixes(fixes);
         }
 
         private static void PrintEnvironment()

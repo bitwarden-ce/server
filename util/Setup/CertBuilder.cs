@@ -67,15 +67,7 @@ namespace Bit.Setup
                     "(requires ca.crt, see docs)?");
             }
 
-            Helpers.WriteLine(_context, "Generating key for IdentityServer.");
-            _context.Install.IdentityCertPassword = CoreHelpers.SecureRandomString(32);
-            Directory.CreateDirectory($"{_context.DestDir}/identity");
-            Helpers.Exec("openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout /tmp/bitwarden-identity.key " +
-                "-out /tmp/bitwarden-identity.crt -subj \"/CN=Bitwarden IdentityServer\" -days 10950");
-            Helpers.Exec($"openssl pkcs12 -export -out {_context.DestDir}/identity/identity.pfx -inkey /tmp/bitwarden-identity.key " +
-                $"-in /tmp/bitwarden-identity.crt -certfile /tmp/bitwarden-identity.crt -passout pass:{_context.Install.IdentityCertPassword}");
-            File.Delete("/tmp/bitwarden-identity.key");
-            File.Delete("/tmp/bitwarden-identity.crt");
+            GenerateIdentityCertificate();
 
             Helpers.WriteLine(_context);
 
@@ -94,6 +86,19 @@ namespace Bit.Setup
                               "to connect to your installation.";
                 Helpers.ShowBanner(_context, "WARNING", message, ConsoleColor.Yellow);
             }
+        }
+
+        public void GenerateIdentityCertificate()
+        {
+            Helpers.WriteLine(_context, "Generating key for IdentityServer.");
+            _context.Install.IdentityCertPassword = CoreHelpers.SecureRandomString(32);
+            Directory.CreateDirectory($"{_context.DestDir}/identity");
+            Helpers.Exec("openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout /tmp/bitwarden-identity.key " +
+                         "-out /tmp/bitwarden-identity.crt -subj \"/CN=Bitwarden IdentityServer\" -days 10950");
+            Helpers.Exec($"openssl pkcs12 -export -out {_context.DestDir}/identity/identity.pfx -inkey /tmp/bitwarden-identity.key " +
+                         $"-in /tmp/bitwarden-identity.crt -certfile /tmp/bitwarden-identity.crt -passout pass:{_context.Install.IdentityCertPassword}");
+            File.Delete("/tmp/bitwarden-identity.key");
+            File.Delete("/tmp/bitwarden-identity.crt");
         }
     }
 }

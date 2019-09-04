@@ -62,6 +62,17 @@ namespace Bit.Setup
             Build();
         }
 
+        public void BuildForFixes(Dictionary<String, String> fixes)
+        {
+            Init();
+            
+            LoadExistingValues(_globalOverrideValues, $"{_context.DestDir}/env/global.override.env");
+            LoadExistingValues(_mssqlOverrideValues, $"{_context.DestDir}/env/mssql.override.env");
+
+            Fix(fixes);
+            Build();
+        }
+
         private void Init()
         {
             var disableUserRegistration = !_context.Config.Instance.EnableUserRegistration;
@@ -189,6 +200,11 @@ namespace Bit.Setup
                     _context.Config.Instance.Admins.DefaultIfEmpty()),
             };
             globalOverrideValues.ToList().ForEach(entry => _globalOverrideValues[entry.Key] = entry.Value);
+        }
+
+        private void Fix(Dictionary<String, String> fixes)
+        {
+            fixes.ToList().ForEach(entry => _globalOverrideValues[entry.Key] = entry.Value);
         }
 
         private void Build()
