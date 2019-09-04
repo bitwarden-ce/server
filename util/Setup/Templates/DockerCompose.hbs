@@ -18,7 +18,9 @@ version: '{{{ComposeVersion}}}'
 services:
   {{DatabaseName}}:
     image: bitwardence/mssql:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+    - internal
     volumes:
 {{#if MssqlDataDockerVolume}}
       - {{DatabaseName}}-data:/var/opt/mssql/data
@@ -34,7 +36,9 @@ services:
 
   web:
     image: bitwardence/web:{{{WebVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+    - internal
     volumes:
       - ../web:/etc/bitwarden/web
     env_file:
@@ -43,7 +47,9 @@ services:
 
   attachments:
     image: bitwardence/attachments:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+      - internal
     volumes:
       - ../core/attachments:/etc/bitwarden/core/attachments
     env_file:
@@ -52,7 +58,9 @@ services:
 
   api:
     image: bitwardence/api:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+      - internal
     volumes:
       - ../core:/etc/bitwarden/core
       - ../ca-certificates:/etc/bitwarden/ca-certificates
@@ -64,7 +72,9 @@ services:
 
   identity:
     image: bitwardence/identity:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+      - internal
     volumes:
       - ../identity:/etc/bitwarden/identity
       - ../core:/etc/bitwarden/core
@@ -77,9 +87,12 @@ services:
 
   admin:
     image: bitwardence/admin:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
     depends_on:
       - {{DatabaseName}}
+    networks:
+      - default
+      - internal
     volumes:
       - ../core:/etc/bitwarden/core
       - ../ca-certificates:/etc/bitwarden/ca-certificates
@@ -91,7 +104,10 @@ services:
 
   icons:
     image: bitwardence/icons:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+      - default
+      - internal
     volumes:
       - ../ca-certificates:/etc/bitwarden/ca-certificates
       - ../logs/icons:/etc/bitwarden/logs
@@ -101,7 +117,10 @@ services:
 
   notifications:
     image: bitwardence/notifications:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+      - default
+      - internal
     volumes:
       - ../ca-certificates:/etc/bitwarden/ca-certificates
       - ../logs/notifications:/etc/bitwarden/logs
@@ -112,7 +131,9 @@ services:
 
   events:
     image: bitwardence/events:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+      - internal
     volumes:
       - ../ca-certificates:/etc/bitwarden/ca-certificates
       - ../logs/events:/etc/bitwarden/logs
@@ -123,7 +144,10 @@ services:
 
   nginx:
     image: bitwardence/nginx:{{{CoreVersion}}}
-    restart: always
+    restart: unless-stopped
+    networks:
+      - default
+      - internal
     depends_on:
       - web
       - admin
@@ -145,6 +169,10 @@ services:
       - ../logs/nginx:/var/log/nginx
     env_file:
       - ../env/uid.env
+
+networks:
+  internal:
+    internal: true
 {{#if MssqlDataDockerVolume}}
 
 volumes:
