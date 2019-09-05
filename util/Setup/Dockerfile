@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/core/runtime:2.2
 
-LABEL com.bitwarden.product="bitwarden" com.bitwarden.project="setup"
+LABEL com.bytegarden.product="bytegarden" com.bytegarden.project="setup"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

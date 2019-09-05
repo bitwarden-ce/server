@@ -1,5 +1,5 @@
 DECLARE @BackupFile varchar(100)
-SET @BackupFile = '/etc/bitwarden/mssql/backups/vault_FULL_$(now).BAK'
+SET @BackupFile = '/etc/bytegarden/mssql/backups/vault_FULL_$(now).BAK'
 
 DECLARE @BackupName varchar(100)
 SET @BackupName = 'vault full backup for $(now)'

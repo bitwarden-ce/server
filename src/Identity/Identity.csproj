@@ -4,7 +4,7 @@
     <Version>1.32.0</Version>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>Bit.Identity</RootNamespace>
-    <UserSecretsId>bitwarden-Identity</UserSecretsId>
+    <UserSecretsId>bytegarden-Identity</UserSecretsId>
     <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>

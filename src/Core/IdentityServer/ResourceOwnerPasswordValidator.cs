@@ -147,7 +147,7 @@ namespace Bit.Core.IdentityServer
             }
 
             context.Result = new GrantValidationResult(user.Id.ToString(), "Application",
-                identityProvider: "bitwarden",
+                identityProvider: "bytegarden",
                 claims: claims.Count > 0 ? claims : null,
                 customResponse: customResponse);
         }

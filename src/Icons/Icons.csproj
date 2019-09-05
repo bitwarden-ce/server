@@ -4,7 +4,7 @@
     <Version>1.32.0</Version>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>Bit.Icons</RootNamespace>
-    <UserSecretsId>bitwarden-Icons</UserSecretsId>
+    <UserSecretsId>bytegarden-Icons</UserSecretsId>
     <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
   </PropertyGroup>
 

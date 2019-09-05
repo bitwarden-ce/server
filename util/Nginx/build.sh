@@ -7,4 +7,4 @@ echo -e "\n## Building Nginx"
 
 echo -e "\nBuilding docker image"
 docker --version
-docker build -t bitwardence/nginx $DIR/.
+docker build -t bytegarden/nginx $DIR/.

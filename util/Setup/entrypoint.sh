@@ -2,8 +2,8 @@
 
 # Setup
 
-GROUPNAME="bitwarden"
-USERNAME="bitwarden"
+GROUPNAME="bytegarden"
+USERNAME="bytegarden"
 
 LUID=${LOCAL_UID:-0}
 LGID=${LOCAL_GID:-0}
@@ -30,16 +30,16 @@ mkhomedir_helper $USERNAME
 # The rest...
 
 chown -R $USERNAME:$GROUPNAME /app
-mkdir -p /bitwarden/env
-mkdir -p /bitwarden/docker
-mkdir -p /bitwarden/ssl
-mkdir -p /bitwarden/letsencrypt
-mkdir -p /bitwarden/identity
-mkdir -p /bitwarden/nginx
-mkdir -p /bitwarden/ca-certificates
-chown -R $USERNAME:$GROUPNAME /bitwarden
+mkdir -p /bytegarden/env
+mkdir -p /bytegarden/docker
+mkdir -p /bytegarden/ssl
+mkdir -p /bytegarden/letsencrypt
+mkdir -p /bytegarden/identity
+mkdir -p /bytegarden/nginx
+mkdir -p /bytegarden/ca-certificates
+chown -R $USERNAME:$GROUPNAME /bytegarden
 
-cp /bitwarden/ca-certificates/*.crt /usr/local/share/ca-certificates/ >/dev/null 2>&1 \
+cp /bytegarden/ca-certificates/*.crt /usr/local/share/ca-certificates/ >/dev/null 2>&1 \
     && update-ca-certificates
 
 exec gosu $USERNAME:$GROUPNAME "$@"

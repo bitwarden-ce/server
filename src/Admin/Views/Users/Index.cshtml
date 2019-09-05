@@ -50,7 +50,10 @@
                             {
                                 <i class="fa fa-times-circle-o fa-lg fa-fw text-muted" title="Email Not Verified"></i>
                             }
-                            <i class="fa fa-lock fa-lg fa-fw" title="2FA Enabled"></i>
+                            @{
+                                var enabled = user.GetTwoFactorProviders().Count > 0;
+                            }
+                                <i class="fa fa-lock fa-lg fa-fw" title="2FA Enabled"></i>
                         </td>
                     </tr>
                 }

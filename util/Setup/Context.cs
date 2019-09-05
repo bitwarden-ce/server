@@ -12,8 +12,8 @@ namespace Bit.Setup
         public bool Quiet { get; set; }
         public bool Stub { get; set; }
         public IDictionary<string, string> Parameters { get; set; }
-        public string DestDir { get; set; } = "/bitwarden";
-        public string OutputDir { get; set; } = "/etc/bitwarden";
+        public string DestDir { get; set; } = "/bytegarden";
+        public string OutputDir { get; set; } = "/etc/bytegarden";
         public string HostOS { get; set; } = "win";
         public string CoreVersion { get; set; } = "latest";
         public string WebVersion { get; set; } = "latest";

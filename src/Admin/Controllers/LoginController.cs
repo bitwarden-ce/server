@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Bit.Admin.Identity;
 using Bit.Admin.Models;
 using Bit.Core.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -10,15 +9,12 @@ namespace Bit.Admin.Controllers
     public class LoginController : Controller
     {
         private readonly PasswordlessSignInManager<IdentityUser> _passwordlessSignInManager;
-        private readonly BypassSigninManager _bypassSigninManager;
 
         public LoginController(
-            PasswordlessSignInManager<IdentityUser> passwordlessSignInManager,
-            BypassSigninManager bypassSigninManager
+            PasswordlessSignInManager<IdentityUser> passwordlessSignInManager
             )
         {
             _passwordlessSignInManager = passwordlessSignInManager;
-            _bypassSigninManager = bypassSigninManager;
         }
 
         public IActionResult Index(string returnUrl = null, string error = null, string success = null,
@@ -36,38 +32,7 @@ namespace Bit.Admin.Controllers
                 Success = success
             });
         }
-
-        public IActionResult Bypass(string error = null, string email = null, string returnUrl = null)
-        {
-            return View(new BypassLoginModel
-            {
-                Email = email,
-                ReturnUrl = returnUrl,
-                Error = error,
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Bypass(BypassLoginModel model, string returnUrl = null)
-        {
-            if (ModelState.IsValid)
-            {
-                var token = await _bypassSigninManager.GenerateConfirmToken(model.Email);
-                if (token != null)
-                {
-                    return RedirectToAction("Confirm", new
-                    {
-                        email = model.Email,
-                        token,
-                        returnUrl,
-                    });
-                }
-            }
-
-            return View(model);
-        }
-
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(LoginModel model)

@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/dotnet/core/aspnet:2.2
 
-LABEL com.bitwarden.product="bitwarden"
+LABEL com.bytegarden.product="bytegarden"
 
-COPY obj/Docker/publish /bitwarden_server
+COPY obj/Docker/publish /bytegarden_server

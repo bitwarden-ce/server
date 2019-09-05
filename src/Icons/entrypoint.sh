@@ -2,8 +2,8 @@
 
 # Setup
 
-GROUPNAME="bitwarden"
-USERNAME="bitwarden"
+GROUPNAME="bytegarden"
+USERNAME="bytegarden"
 
 LUID=${LOCAL_UID:-0}
 LGID=${LOCAL_GID:-0}
@@ -30,11 +30,11 @@ mkhomedir_helper $USERNAME
 # The rest...
 
 chown -R $USERNAME:$GROUPNAME /app
-mkdir -p /etc/bitwarden/logs
-mkdir -p /etc/bitwarden/ca-certificates
-chown -R $USERNAME:$GROUPNAME /etc/bitwarden
+mkdir -p /etc/bytegarden/logs
+mkdir -p /etc/bytegarden/ca-certificates
+chown -R $USERNAME:$GROUPNAME /etc/bytegarden
 
-cp /etc/bitwarden/ca-certificates/*.crt /usr/local/share/ca-certificates/ >/dev/null 2>&1 \
+cp /etc/bytegarden/ca-certificates/*.crt /usr/local/share/ca-certificates/ >/dev/null 2>&1 \
     && update-ca-certificates
 
 exec gosu $USERNAME:$GROUPNAME dotnet /app/Icons.dll

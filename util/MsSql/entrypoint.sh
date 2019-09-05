@@ -2,8 +2,8 @@
 
 # Setup
 
-GROUPNAME="bitwarden"
-USERNAME="bitwarden"
+GROUPNAME="bytegarden"
+USERNAME="bytegarden"
 
 LUID=${LOCAL_UID:-0}
 LGID=${LOCAL_GID:-0}
@@ -45,8 +45,8 @@ fi
 # ref: https://stackoverflow.com/a/38850273
 touch /var/log/cron.log /etc/crontab /etc/cron.*/*
 chown $USERNAME:$GROUPNAME /var/log/cron.log
-mkdir -p /etc/bitwarden/mssql/backups
-chown -R $USERNAME:$GROUPNAME /etc/bitwarden
+mkdir -p /etc/bytegarden/mssql/backups
+chown -R $USERNAME:$GROUPNAME /etc/bytegarden
 mkdir -p /var/opt/mssql/data
 chown -R $USERNAME:$GROUPNAME /var/opt/mssql
 chown $USERNAME:$GROUPNAME /backup-db.sh

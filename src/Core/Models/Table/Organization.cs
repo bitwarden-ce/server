@@ -4,6 +4,7 @@ using Bit.Core.Enums;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Linq;
+using IdentityServer4.Extensions;
 
 namespace Bit.Core.Models.Table
 {
@@ -91,7 +92,7 @@ namespace Bit.Core.Models.Table
         public bool TwoFactorIsEnabled()
         {
             var providers = GetTwoFactorProviders();
-            if(providers == null)
+            if(providers.IsNullOrEmpty())
             {
                 return false;
             }

@@ -1,4 +1,5 @@
-﻿@model UserViewModel
+﻿@using IdentityServer4.Extensions
+@model UserViewModel
 @inject Bit.Core.Services.IUserService userService
 <dl class="row">
     <dt class="col-sm-4 col-lg-3">Id</dt>
@@ -9,6 +10,24 @@
 
     <dt class="col-sm-4 col-lg-3">Items</dt>
     <dd class="col-sm-8 col-lg-9">@Model.CipherCount</dd>
+    
+    <dt class="col-sm-4 col-lg-3">Use 2FA</dt>
+    <dd class="col-sm-8 col-lg-9">
+        @if (Model.User.TwoFactorIsEnabled())
+        {
+            @:Yes
+            <ul>
+                @foreach (var type in Model.User.GetTwoFactorProviders().Keys)
+                {
+                    <li>@(type.ToString())</li>
+                }
+            </ul>
+        }
+        else
+        {
+            @:No
+        }
+    </dd>
 
     <dt class="col-sm-4 col-lg-3">Vault Modified</dt>
     <dd class="col-sm-8 col-lg-9">@Model.User.AccountRevisionDate.ToString()</dd>

@@ -19,5 +19,5 @@ if [ "$1" != "nodocker" ]
 then
     echo -e "\nBuilding docker image"
     docker --version
-    docker build -t bitwardence/notifications $DIR/.
+    docker build -t bytegarden/notifications $DIR/.
 fi

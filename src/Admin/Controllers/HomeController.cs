@@ -38,12 +38,13 @@ namespace Bit.Admin.Controllers
             });
         }
 
+/*
         public async Task<IActionResult> GetLatestDockerHubVersion(string repository)
         {
             try
             {
                 var response = await _httpClient.GetAsync(
-                $"https://hub.docker.com/v2/repositories/bitwarden/{repository}/tags/");
+                $"https://hub.docker.com/v2/repositories/bytegarden/{repository}/tags/");
                 if(response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
@@ -81,5 +82,6 @@ namespace Bit.Admin.Controllers
 
             return new JsonResult("-");
         }
+*/
     }
 }

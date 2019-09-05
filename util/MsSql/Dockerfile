@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/mssql/server:2017-CU14
 
-LABEL com.bitwarden.product="bitwarden"
+LABEL com.bytegarden.product="bytegarden"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -8,8 +8,8 @@ RUN apt-get update \
         gosu \
     && rm -rf /var/lib/apt/lists/*
 
-COPY crontab /etc/cron.d/bitwarden-cron
-RUN chmod 0644 /etc/cron.d/bitwarden-cron
+COPY crontab /etc/cron.d/bytegarden-cron
+RUN chmod 0644 /etc/cron.d/bytegarden-cron
 COPY backup-db.sql /
 COPY backup-db.sh /
 COPY entrypoint.sh /

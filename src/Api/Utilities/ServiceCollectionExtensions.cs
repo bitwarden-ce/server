@@ -14,22 +14,22 @@ namespace Bit.Api.Utilities
             {
                 config.SwaggerDoc("public", new Info
                 {
-                    Title = "Bitwarden Public API",
+                    Title = "ByteGarden Public API",
                     Version = "latest",
                     Contact = new Contact
                     {
-                        Name = "Bitwarden Support",
-                        Url = "https://bitwarden.com",
-                        Email = "support@bitwarden.com"
+                        Name = "ByteGarden Support",
+                        Url = "https://bytegarden.com",
+                        Email = "support@bytegarden.com"
                     },
-                    Description = "The Bitwarden public APIs.",
+                    Description = "The ByteGarden public APIs.",
                     License = new License
                     {
                         Name = "GNU Affero General Public License v3.0",
-                        Url = "https://github.com/bitwarden/server/blob/master/LICENSE.txt"
+                        Url = "https://github.com/bytegarden/server/blob/master/LICENSE.txt"
                     }
                 });
-                // config.SwaggerDoc("internal", new Info { Title = "Bitwarden Internal API", Version = "latest" });
+                // config.SwaggerDoc("internal", new Info { Title = "ByteGarden Internal API", Version = "latest" });
 
                 config.AddSecurityDefinition("OAuth2 Client Credentials", new OAuth2Scheme
                 {

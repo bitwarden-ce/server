@@ -2,9 +2,11 @@ using System;
 using Bit.Core.Enums;
 using Bit.Core.Utilities;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using Bit.Core.Services;
 using Bit.Core.Exceptions;
+using IdentityServer4.Extensions;
 using Microsoft.AspNetCore.Identity;
 
 namespace Bit.Core.Models.Table
@@ -91,6 +93,17 @@ namespace Bit.Core.Models.Table
             }
 
             return providers[provider];
+        }
+
+        public bool TwoFactorIsEnabled()
+        {
+            var providers = GetTwoFactorProviders();
+            if(providers.IsNullOrEmpty())
+            {
+                return false;
+            }
+
+            return providers.Any(p => (p.Value?.Enabled ?? false));
         }
 
         public IdentityUser ToIdentityUser()

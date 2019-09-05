@@ -57,7 +57,7 @@ namespace Bit.Core.Services
                 sendGridMessage.AddSubstitutions(subs);
             }
 
-            var cats = new List<string> { "Bitwarden Server" };
+            var cats = new List<string> { "ByteGarden Server" };
             if(!string.IsNullOrWhiteSpace(message.Category))
             {
                 cats.Add(message.Category);

@@ -2,8 +2,8 @@
 
 # Setup
 
-GROUPNAME="bitwarden"
-USERNAME="bitwarden"
+GROUPNAME="bytegarden"
+USERNAME="bytegarden"
 
 LUID=${LOCAL_UID:-0}
 LGID=${LOCAL_GID:-0}
@@ -29,9 +29,9 @@ mkhomedir_helper $USERNAME
 
 # The rest...
 
-chown -R $USERNAME:$GROUPNAME /bitwarden_server
-mkdir -p /etc/bitwarden/core/attachments
-chown -R $USERNAME:$GROUPNAME /etc/bitwarden
+chown -R $USERNAME:$GROUPNAME /bytegarden_server
+mkdir -p /etc/bytegarden/core/attachments
+chown -R $USERNAME:$GROUPNAME /etc/bytegarden
 
-exec gosu $USERNAME:$GROUPNAME dotnet /bitwarden_server/Server.dll \
-    /contentRoot=/etc/bitwarden/core/attachments /webRoot=. /serveUnknown=true
+exec gosu $USERNAME:$GROUPNAME dotnet /bytegarden_server/Server.dll \
+    /contentRoot=/etc/bytegarden/core/attachments /webRoot=. /serveUnknown=true

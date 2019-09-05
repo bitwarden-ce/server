@@ -7,4 +7,4 @@ echo -e "\n## Building Attachments"
 
 echo -e "\nBuilding docker image"
 docker --version
-docker build -t bitwardence/attachments $DIR/.
+docker build -t bytegarden/attachments $DIR/.

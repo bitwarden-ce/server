@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Globalization;
-using Bit.Admin.Identity;
 using Bit.Core;
 using Bit.Core.Identity;
 using Bit.Core.Utilities;
@@ -46,7 +45,6 @@ namespace Bit.Admin
 
             // Identity
             services.AddPasswordlessIdentityServices<ReadOnlyEnvIdentityUserStore>(globalSettings);
-            services.AddScoped<BypassSigninManager>();
             services.Configure<SecurityStampValidatorOptions>(options =>
             {
                 options.ValidationInterval = TimeSpan.FromMinutes(5);

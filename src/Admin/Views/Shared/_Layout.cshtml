@@ -1,4 +1,5 @@
-﻿@inject SignInManager<IdentityUser> SignInManager
+﻿@using Bit.Core.Utilities
+@inject SignInManager<IdentityUser> SignInManager
 @inject Bit.Core.GlobalSettings GlobalSettings
 <!DOCTYPE html>
 <html>
@@ -6,15 +7,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex,nofollow" />
-    <title>@ViewData["Title"] - Bitwarden Admin Portal</title>
+    <title>@ViewData["Title"] - ByteGarden Admin Portal</title>
 
     <link rel="stylesheet" href="~/css/webfonts.css" />
     <environment include="Development">
-        <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.css" />
+        <link rel="stylesheet" href="~/lib/fontawesome/css/fontawesome.css" />
         <link rel="stylesheet" href="~/css/site.css" />
     </environment>
     <environment exclude="Development">
-        <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.min.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/lib/font-awesome/css/fontawesome.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     </environment>
 </head>
@@ -38,16 +39,16 @@
                         <li class="nav-item" active-controller="Organizations">
                             <a class="nav-link" asp-controller="Organizations" asp-action="Index">Organizations</a>
                         </li>
-                        @if(GlobalSettings.DocumentDb.Uri == "" || GlobalSettings.DocumentDb.Uri == "SECRET" ||
-                            GlobalSettings.DocumentDb.Uri != null) {
+                        @if(!(GlobalSettings.DocumentDb.Uri == "" || GlobalSettings.DocumentDb.Uri == "SECRET" ||
+                            GlobalSettings.DocumentDb.Uri != null)) {
                             <li class="nav-item" active-controller="Logs">
                                 <a class="nav-link" asp-controller="Logs" asp-action="Index">Logs</a>
                             </li>
                         }
                     }
-                    <li class="nav-item">
-                        <a class="nav-link" href="https://help.bitwarden.com/hosting/" target="_blank">Docs</a>
-                    </li>
+                    @* <li class="nav-item"> *@
+                    @*     <a class="nav-link" href="https://help.bytegarden.com/hosting/" target="_blank">Docs</a> *@
+                    @* </li> *@
                 </ul>
                 @if(SignInManager.IsSignedIn(User))
                 {
@@ -69,7 +70,8 @@
 
     <footer class="container mb-4">
         <hr />
-        &copy; @DateTime.Now.Year, 8bit Solutions LLC
+        &copy; @DateTime.Now.Year, ByteGarden Contibutors <br />
+        <a href="https://gitlab.kokakiwi.net/contrib/bytegarden" target="_blank">ByteGarden</a> v@(CoreHelpers.GetVersion())}
     </footer>
 
     <environment include="Development">

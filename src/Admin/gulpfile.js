@@ -21,7 +21,7 @@ paths.minJs = paths.jsDir + '**/*.min.js';
 paths.libJs = paths.libDir + '**/*.js';
 paths.libMinJs = paths.libDir + '**/*.min.js';
 
-const cleaner = path => (cb) => rimraf(path, cb);
+const cleaner = path => cb => rimraf(path, cb);
 
 const clean_js = cleaner(paths.minJs);
 const clean_css = cleaner(paths.cssDir);
@@ -38,8 +38,8 @@ const build_lib = gulp.series(clean_lib, () => {
             dest: paths.libDir + 'popper'
         },
         {
-            src: paths.npmDir + 'font-awesome/css/*',
-            dest: paths.libDir + 'font-awesome/css'
+            src: paths.npmDir + '@fortawesome/fontawesome-free/css/*',
+            dest: paths.libDir + 'fontawesome/css'
         },
         {
             src: paths.npmDir + 'font-awesome/fonts/*',

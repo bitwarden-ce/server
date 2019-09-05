@@ -1,6 +1,6 @@
-FROM bitwarden/server
+FROM bytegarden/server
 
-LABEL com.bitwarden.product="bitwarden"
+LABEL com.bytegarden.product="bytegarden"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

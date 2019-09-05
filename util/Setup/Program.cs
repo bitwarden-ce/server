@@ -123,17 +123,17 @@ namespace Bit.Setup
             Console.WriteLine("\nIf you need to make additional configuration changes, you can modify\n" +
                 "the settings in `{0}` and then run:\n{1}",
                 _context.HostOS == "win" ? ".\\bwdata\\config.yml" : "./bwdata/config.yml",
-                _context.HostOS == "win" ? "`.\\bitwarden.ps1 -rebuild` or `.\\bitwarden.ps1 -update`" :
-                    "`./bitwarden.sh rebuild` or `./bitwarden.sh update`");
+                _context.HostOS == "win" ? "`.\\bytegarden.ps1 -rebuild` or `.\\bytegarden.ps1 -update`" :
+                    "`./bytegarden.sh rebuild` or `./bytegarden.sh update`");
 
             Console.WriteLine("\nNext steps, run:");
             if(_context.HostOS == "win")
             {
-                Console.WriteLine("`.\\bitwarden.ps1 -start`");
+                Console.WriteLine("`.\\bytegarden.ps1 -start`");
             }
             else
             {
-                Console.WriteLine("`./bitwarden.sh start`");
+                Console.WriteLine("`./bytegarden.sh start`");
             }
             Console.WriteLine(string.Empty);
         }
@@ -172,17 +172,17 @@ namespace Bit.Setup
             {
                 return;
             }
-            Console.WriteLine("\nBitwarden is up and running!");
+            Console.WriteLine("\nByteGarden is up and running!");
             Console.WriteLine("===================================================");
             Console.WriteLine("\nvisit {0}", _context.Config.Url);
             Console.Write("to update, run ");
             if(_context.HostOS == "win")
             {
-                Console.Write("`.\\bitwarden.ps1 -updateself` and then `.\\bitwarden.ps1 -update`");
+                Console.Write("`.\\bytegarden.ps1 -updateself` and then `.\\bytegarden.ps1 -update`");
             }
             else
             {
-                Console.Write("`./bitwarden.sh updateself` and then `./bitwarden.sh update`");
+                Console.Write("`./bytegarden.sh updateself` and then `./bytegarden.sh update`");
             }
             Console.WriteLine("\n");
         }

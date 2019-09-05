@@ -9,39 +9,39 @@ if [ $# -gt 1 -a "$1" == "push" ]
 then
     TAG=$2
 
-    echo "Pushing Bitwarden ($TAG)"
+    echo "Pushing ByteGarden ($TAG)"
     echo "========================"
     
-    docker push bitwardence/api:$TAG
-    docker push bitwardence/identity:$TAG
-    docker push bitwardence/server:$TAG
-    docker push bitwardence/attachments:$TAG
-    docker push bitwardence/icons:$TAG
-    docker push bitwardence/notifications:$TAG
-    docker push bitwardence/events:$TAG
-    docker push bitwardence/admin:$TAG
-    docker push bitwardence/nginx:$TAG
-    docker push bitwardence/mssql:$TAG
-    docker push bitwardence/setup:$TAG
+    docker push bytegarden/api:$TAG
+    docker push bytegarden/identity:$TAG
+    docker push bytegarden/server:$TAG
+    docker push bytegarden/attachments:$TAG
+    docker push bytegarden/icons:$TAG
+    docker push bytegarden/notifications:$TAG
+    docker push bytegarden/events:$TAG
+    docker push bytegarden/admin:$TAG
+    docker push bytegarden/nginx:$TAG
+    docker push bytegarden/mssql:$TAG
+    docker push bytegarden/setup:$TAG
 elif [ $# -gt 1 -a "$1" == "tag" ]
 then
     TAG=$2
     
-    echo "Tagging Bitwarden as '$TAG'"
+    echo "Tagging ByteGarden as '$TAG'"
     
-    docker tag bitwardence/api bitwardence/api:$TAG
-    docker tag bitwardence/identity bitwardence/identity:$TAG
-    docker tag bitwardence/server bitwardence/server:$TAG
-    docker tag bitwardence/attachments bitwardence/attachments:$TAG
-    docker tag bitwardence/icons bitwardence/icons:$TAG
-    docker tag bitwardence/notifications bitwardence/notifications:$TAG
-    docker tag bitwardence/events bitwardence/events:$TAG
-    docker tag bitwardence/admin bitwardence/admin:$TAG
-    docker tag bitwardence/nginx bitwardence/nginx:$TAG
-    docker tag bitwardence/mssql bitwardence/mssql:$TAG
-    docker tag bitwardence/setup bitwardence/setup:$TAG
+    docker tag bytegarden/api bytegarden/api:$TAG
+    docker tag bytegarden/identity bytegarden/identity:$TAG
+    docker tag bytegarden/server bytegarden/server:$TAG
+    docker tag bytegarden/attachments bytegarden/attachments:$TAG
+    docker tag bytegarden/icons bytegarden/icons:$TAG
+    docker tag bytegarden/notifications bytegarden/notifications:$TAG
+    docker tag bytegarden/events bytegarden/events:$TAG
+    docker tag bytegarden/admin bytegarden/admin:$TAG
+    docker tag bytegarden/nginx bytegarden/nginx:$TAG
+    docker tag bytegarden/mssql bytegarden/mssql:$TAG
+    docker tag bytegarden/setup bytegarden/setup:$TAG
 else
-    echo "Building Bitwarden"
+    echo "Building ByteGarden"
     echo "=================="
 
     chmod u+x $DIR/src/Api/build.sh

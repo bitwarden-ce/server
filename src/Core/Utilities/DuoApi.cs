@@ -24,7 +24,7 @@ namespace Bit.Core.Utilities.Duo
     public class DuoApi
     {
         private const string UrlScheme = "https";
-        private const string UserAgent = "Bitwarden_DuoAPICSharp/1.0 (.NET Core)";
+        private const string UserAgent = "ByteGarden_DuoAPICSharp/1.0 (.NET Core)";
 
         private readonly string _host;
         private readonly string _ikey;

@@ -4,7 +4,7 @@
     <Version>1.32.0</Version>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>Bit.Admin</RootNamespace>
-    <UserSecretsId>bitwarden-Admin</UserSecretsId>
+    <UserSecretsId>bytegarden-Admin</UserSecretsId>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
   

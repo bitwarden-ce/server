@@ -1,21 +1,14 @@
-<p align="center">
-  <img src="https://github.com/bitwarden/brand/blob/master/screenshots/apps-combo-logo.png" alt="Bitwarden" />
-</p>
-<p align="center">
-  <a href="https://ci.appveyor.com/project/bitwarden/server/branch/master" target="_blank">
-    <img src="https://ci.appveyor.com/api/projects/status/n4ntjp7ag1uwxckd/branch/master?svg=true" alt="appveyor build" />
-  </a>
-  <a href="https://hub.docker.com/u/bitwarden/" target="_blank">
-    <img src="https://img.shields.io/docker/pulls/bitwarden/api.svg" alt="DockerHub" />
-  </a>
-  <a href="https://gitter.im/bitwarden/Lobby" target="_blank">
-    <img src="https://badges.gitter.im/bitwarden/Lobby.svg" alt="gitter chat" />
-  </a>
-</p>
+# ByteGarden Server
 
--------------------
+<!-- Find a logo -->
 
-The Bitwarden Server project contains the APIs, database, and other core infrastructure items needed for the "backend" of all bitwarden client applications.
+[![Docker pulls](https://img.shields.io/docker/pulls/bytegarden/api.svg)](https://hub.docker.com/u/bytegarden)
+[![Docker pulls](https://img.shields.io/docker/stars/bytegarden/api.svg)](https://hub.docker.com/u/bytegarden)
+[![Mattermost](https://img.shields.io/badge/mattermost-join%20char-orange.svg)](https://most.kokakiwi.net/signup_user_complete/?id=1atxn5ydk3g8pe4omy1akmhoaw)
+
+---
+
+The ByteGarden Server project contains the APIs, database, and other core infrastructure items needed for the "backend" of all bytegarden client applications.
 
 The server project is written in C# using .NET Core with ASP.NET Core. The database is written in T-SQL/SQL Server. The codebase can be developed, built, run, and deployed cross-platform on Windows, macOS, and Linux distributions.
 
@@ -24,7 +17,7 @@ The server project is written in C# using .NET Core with ASP.NET Core. The datab
 ### Requirements
 
 - [.NET Core 2.x SDK](https://www.microsoft.com/net/download/core)
-- [SQL Server 2017](https://docs.microsoft.com/en-us/sql/index)
+- [SQL Server 2017](https://docs.microsoft.com/en-us/sql/index) (if running directly on host)
 
 *These dependencies are free to use.*
 
@@ -60,14 +53,12 @@ visit http://localhost:33657/.well-known/openid-configuration
 ## Deploy
 
 <p align="center">
-  <a href="https://hub.docker.com/u/bitwarden/" target="_blank">
+  <a href="https://hub.docker.com/u/bytegarden/" target="_blank">
     <img src="https://i.imgur.com/SZc8JnH.png" alt="docker" />
   </a>
 </p>
 
-You can deploy Bitwarden using Docker containers on Windows, macOS, and Linux distributions. Use the provided PowerShell and Bash scripts to get started quickly. Find all of the Bitwarden images on [Docker Hub](https://hub.docker.com/u/bitwarden/).
-
-Full documentation for deploying Bitwarden with Docker can be found in our help center at: https://help.bitwarden.com/article/install-on-premise/
+You can deploy ByteGarden using Docker containers on Windows, macOS, and Linux distributions. Use the provided PowerShell and Bash scripts to get started quickly. Find all of the ByteGarden images on [Docker Hub](https://hub.docker.com/u/bytegarden/).
 
 ### Requirements
 
@@ -75,28 +66,3 @@ Full documentation for deploying Bitwarden with Docker can be found in our help 
 - [Docker Compose](https://docs.docker.com/compose/install/) (already included with some Docker installations)
 
 *These dependencies are free to use.*
-
-### Linux & macOS
-
-```
-curl -s -o bitwarden.sh \
-    https://raw.githubusercontent.com/bitwarden/server/master/scripts/bitwarden.sh \
-    && chmod +x bitwarden.sh
-./bitwarden.sh install
-./bitwarden.sh start
-```
-
-### Windows
-
-```
-Invoke-RestMethod -OutFile bitwarden.ps1 `
-    -Uri https://raw.githubusercontent.com/bitwarden/server/master/scripts/bitwarden.ps1
-.\bitwarden.ps1 -install
-.\bitwarden.ps1 -start
-```
-
-## Contribute
-
-Code contributions are welcome! Visual Studio or VS Code is highly recommended if you are working on this project. Please commit any pull requests against the `master` branch.
-
-Security audits and feedback are welcome. Please open an issue or email us privately if the report is sensitive in nature. You can read our security policy in the [`SECURITY.md`](SECURITY.md) file. We also run a program on [HackerOne](https://hackerone.com/bitwarden).

@@ -4,7 +4,7 @@
     <Version>1.32.0</Version>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>Bit.Api</RootNamespace>
-    <UserSecretsId>bitwarden-Api</UserSecretsId>
+    <UserSecretsId>bytegarden-Api</UserSecretsId>
     <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

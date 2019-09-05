@@ -158,10 +158,10 @@ namespace Bit.Api
             });
             app.UseSwaggerUI(config =>
             {
-                config.DocumentTitle = "Bitwarden API Documentation";
+                config.DocumentTitle = "ByteGarden API Documentation";
                 config.RoutePrefix = "docs";
                 config.SwaggerEndpoint($"{globalSettings.BaseServiceUri.Api}/specs/public/swagger.json",
-                    "Bitwarden Public API");
+                    "ByteGarden Public API");
                 config.OAuthClientId("accountType.id");
                 config.OAuthClientSecret("secretKey");
             });

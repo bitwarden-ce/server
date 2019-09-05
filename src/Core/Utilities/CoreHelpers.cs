@@ -33,7 +33,6 @@ namespace Bit.Core.Utilities
             "RL?+AOEUIDHTNS_:QJKXBMWVZ";
         private static readonly string _qwertyColemakMap = "qwertyuiopasdfghjkl;zxcvbnmQWERTYUIOPASDFGHJKL:ZXCVBNM";
         private static readonly string _colemakMap = "qwfpgjluy;arstdhneiozxcvbkmQWFPGJLUY:ARSTDHNEIOZXCVBKM";
-        private static readonly string CloudFlareConnectingIp = "CF-Connecting-IP";
         private static readonly string RealIp = "X-Real-IP";
 
         /// <summary>
@@ -428,12 +427,12 @@ namespace Bit.Core.Utilities
                 return string.Empty;
             }
 
-            if(val.GetType() == typeof(DateTime))
+            if(val is DateTime)
             {
                 return ToEpocSeconds((DateTime)val).ToString();
             }
 
-            if(val.GetType() == typeof(bool))
+            if(val is bool)
             {
                 return val.ToString().ToLowerInvariant();
             }

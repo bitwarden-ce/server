@@ -2,8 +2,8 @@
 
 # Setup
 
-GROUPNAME="bitwarden"
-USERNAME="bitwarden"
+GROUPNAME="bytegarden"
+USERNAME="bytegarden"
 
 LUID=${LOCAL_UID:-0}
 LGID=${LOCAL_GID:-0}
@@ -29,16 +29,16 @@ mkhomedir_helper $USERNAME
 
 # The rest...
 
-mkdir -p /etc/bitwarden/identity
-mkdir -p /etc/bitwarden/core
-mkdir -p /etc/bitwarden/logs
-mkdir -p /etc/bitwarden/ca-certificates
-chown -R $USERNAME:$GROUPNAME /etc/bitwarden
+mkdir -p /etc/bytegarden/identity
+mkdir -p /etc/bytegarden/core
+mkdir -p /etc/bytegarden/logs
+mkdir -p /etc/bytegarden/ca-certificates
+chown -R $USERNAME:$GROUPNAME /etc/bytegarden
 
-cp /etc/bitwarden/identity/identity.pfx /app/identity.pfx
+cp /etc/bytegarden/identity/identity.pfx /app/identity.pfx
 chown -R $USERNAME:$GROUPNAME /app
 
-cp /etc/bitwarden/ca-certificates/*.crt /usr/local/share/ca-certificates/ >/dev/null 2>&1 \
+cp /etc/bytegarden/ca-certificates/*.crt /usr/local/share/ca-certificates/ >/dev/null 2>&1 \
     && update-ca-certificates
 
 exec gosu $USERNAME:$GROUPNAME dotnet /app/Identity.dll

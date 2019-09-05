@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/core/aspnet:2.2
 
-LABEL com.bitwarden.product="bitwarden"
+LABEL com.bytegarden.product="bytegarden"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

@@ -49,7 +49,7 @@ namespace Bit.Setup
                         $"-out {_context.DestDir}/ssl/self/{_context.Install.Domain}/certificate.crt " +
                         $"-reqexts SAN -extensions SAN " +
                         $"-config <(cat /usr/lib/ssl/openssl.cnf <(printf '[SAN]\nsubjectAltName=DNS:{_context.Install.Domain}\nbasicConstraints=CA:true')) " +
-                        $"-subj \"/C=US/ST=Florida/L=Jacksonville/O=8bit Solutions LLC/OU=Bitwarden/CN={_context.Install.Domain}\"");
+                        $"-subj \"/C=US/ST=Florida/L=Jacksonville/O=8bit Solutions LLC/OU=ByteGarden/CN={_context.Install.Domain}\"");
                 }
             }
 
@@ -73,15 +73,15 @@ namespace Bit.Setup
 
             if(!_context.Config.Ssl.Enable)
             {
-                var message = "You are not using a SSL certificate. Bitwarden requires HTTPS to operate. \n" +
+                var message = "You are not using a SSL certificate. ByteGarden requires HTTPS to operate. \n" +
                               "You must front your installation with a HTTPS proxy or the web vault (and \n" +
-                              "other Bitwarden apps) will not work properly.";
+                              "other ByteGarden apps) will not work properly.";
                 Helpers.ShowBanner(_context, "WARNING", message, ConsoleColor.Yellow);
             }
             else if(_context.Config.Ssl.Enable && !_context.Install.Trusted)
             {
                 var message = "You are using an untrusted SSL certificate. This certificate will not be \n" +
-                              "trusted by Bitwarden client applications. You must add this certificate to \n" +
+                              "trusted by ByteGarden client applications. You must add this certificate to \n" +
                               "the trusted store on each device or else you will receive errors when trying \n" +
                               "to connect to your installation.";
                 Helpers.ShowBanner(_context, "WARNING", message, ConsoleColor.Yellow);
@@ -93,12 +93,12 @@ namespace Bit.Setup
             Helpers.WriteLine(_context, "Generating key for IdentityServer.");
             _context.Install.IdentityCertPassword = CoreHelpers.SecureRandomString(32);
             Directory.CreateDirectory($"{_context.DestDir}/identity");
-            Helpers.Exec("openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout /tmp/bitwarden-identity.key " +
-                         "-out /tmp/bitwarden-identity.crt -subj \"/CN=Bitwarden IdentityServer\" -days 10950");
-            Helpers.Exec($"openssl pkcs12 -export -out {_context.DestDir}/identity/identity.pfx -inkey /tmp/bitwarden-identity.key " +
-                         $"-in /tmp/bitwarden-identity.crt -certfile /tmp/bitwarden-identity.crt -passout pass:{_context.Install.IdentityCertPassword}");
-            File.Delete("/tmp/bitwarden-identity.key");
-            File.Delete("/tmp/bitwarden-identity.crt");
+            Helpers.Exec("openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout /tmp/bytegarden-identity.key " +
+                         "-out /tmp/bytegarden-identity.crt -subj \"/CN=ByteGarden IdentityServer\" -days 10950");
+            Helpers.Exec($"openssl pkcs12 -export -out {_context.DestDir}/identity/identity.pfx -inkey /tmp/bytegarden-identity.key " +
+                         $"-in /tmp/bytegarden-identity.crt -certfile /tmp/bytegarden-identity.crt -passout pass:{_context.Install.IdentityCertPassword}");
+            File.Delete("/tmp/bytegarden-identity.key");
+            File.Delete("/tmp/bytegarden-identity.crt");
         }
     }
 }

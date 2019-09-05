@@ -39,7 +39,7 @@ namespace Bit.Api.Controllers
             _userService = userService;
             _currentContext = currentContext;
             _globalSettings = globalSettings;
-            _userAgent = "Bitwarden Community Edition";
+            _userAgent = "ByteGarden";
         }
 
         [HttpGet("breach")]

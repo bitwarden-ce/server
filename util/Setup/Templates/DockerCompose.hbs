@@ -17,7 +17,7 @@ version: '{{{ComposeVersion}}}'
 
 services:
   {{DatabaseName}}:
-    image: bitwardence/mssql:{{{CoreVersion}}}
+    image: bytegarden/mssql:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
     - internal
@@ -28,65 +28,65 @@ services:
       - ../{{DatabaseName}}/data:/var/opt/mssql/data
 {{/if}}
       - ../logs/{{DatabaseName}}:/var/opt/mssql/log
-      - ../mssql/backups:/etc/bitwarden/mssql/backups
+      - ../mssql/backups:/etc/bytegarden/mssql/backups
     env_file:
       - mssql.env
       - ../env/uid.env
       - ../env/mssql.override.env
 
   web:
-    image: bitwardence/web:{{{WebVersion}}}
+    image: bytegarden/web:{{{WebVersion}}}
     restart: unless-stopped
     networks:
     - internal
     volumes:
-      - ../web:/etc/bitwarden/web
+      - ../web:/etc/bytegarden/web
     env_file:
       - global.env
       - ../env/uid.env
 
   attachments:
-    image: bitwardence/attachments:{{{CoreVersion}}}
+    image: bytegarden/attachments:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
       - internal
     volumes:
-      - ../core/attachments:/etc/bitwarden/core/attachments
+      - ../core/attachments:/etc/bytegarden/core/attachments
     env_file:
       - global.env
       - ../env/uid.env
 
   api:
-    image: bitwardence/api:{{{CoreVersion}}}
+    image: bytegarden/api:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
       - internal
     volumes:
-      - ../core:/etc/bitwarden/core
-      - ../ca-certificates:/etc/bitwarden/ca-certificates
-      - ../logs/api:/etc/bitwarden/logs
+      - ../core:/etc/bytegarden/core
+      - ../ca-certificates:/etc/bytegarden/ca-certificates
+      - ../logs/api:/etc/bytegarden/logs
     env_file:
       - global.env
       - ../env/uid.env
       - ../env/global.override.env
 
   identity:
-    image: bitwardence/identity:{{{CoreVersion}}}
+    image: bytegarden/identity:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
       - internal
     volumes:
-      - ../identity:/etc/bitwarden/identity
-      - ../core:/etc/bitwarden/core
-      - ../ca-certificates:/etc/bitwarden/ca-certificates
-      - ../logs/identity:/etc/bitwarden/logs
+      - ../identity:/etc/bytegarden/identity
+      - ../core:/etc/bytegarden/core
+      - ../ca-certificates:/etc/bytegarden/ca-certificates
+      - ../logs/identity:/etc/bytegarden/logs
     env_file:
       - global.env
       - ../env/uid.env
       - ../env/global.override.env
 
   admin:
-    image: bitwardence/admin:{{{CoreVersion}}}
+    image: bytegarden/admin:{{{CoreVersion}}}
     restart: unless-stopped
     depends_on:
       - {{DatabaseName}}
@@ -94,56 +94,56 @@ services:
       - default
       - internal
     volumes:
-      - ../core:/etc/bitwarden/core
-      - ../ca-certificates:/etc/bitwarden/ca-certificates
-      - ../logs/admin:/etc/bitwarden/logs
+      - ../core:/etc/bytegarden/core
+      - ../ca-certificates:/etc/bytegarden/ca-certificates
+      - ../logs/admin:/etc/bytegarden/logs
     env_file:
       - global.env
       - ../env/uid.env
       - ../env/global.override.env
 
   icons:
-    image: bitwardence/icons:{{{CoreVersion}}}
+    image: bytegarden/icons:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
       - default
       - internal
     volumes:
-      - ../ca-certificates:/etc/bitwarden/ca-certificates
-      - ../logs/icons:/etc/bitwarden/logs
+      - ../ca-certificates:/etc/bytegarden/ca-certificates
+      - ../logs/icons:/etc/bytegarden/logs
     env_file:
       - global.env
       - ../env/uid.env
 
   notifications:
-    image: bitwardence/notifications:{{{CoreVersion}}}
+    image: bytegarden/notifications:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
       - default
       - internal
     volumes:
-      - ../ca-certificates:/etc/bitwarden/ca-certificates
-      - ../logs/notifications:/etc/bitwarden/logs
+      - ../ca-certificates:/etc/bytegarden/ca-certificates
+      - ../logs/notifications:/etc/bytegarden/logs
     env_file:
       - global.env
       - ../env/uid.env
       - ../env/global.override.env
 
   events:
-    image: bitwardence/events:{{{CoreVersion}}}
+    image: bytegarden/events:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
       - internal
     volumes:
-      - ../ca-certificates:/etc/bitwarden/ca-certificates
-      - ../logs/events:/etc/bitwarden/logs
+      - ../ca-certificates:/etc/bytegarden/ca-certificates
+      - ../logs/events:/etc/bytegarden/logs
     env_file:
       - global.env
       - ../env/uid.env
       - ../env/global.override.env
 
   nginx:
-    image: bitwardence/nginx:{{{CoreVersion}}}
+    image: bytegarden/nginx:{{{CoreVersion}}}
     restart: unless-stopped
     networks:
       - default
@@ -163,7 +163,7 @@ services:
 {{/if}}
 {{/if}}
     volumes:
-      - ../nginx:/etc/bitwarden/nginx
+      - ../nginx:/etc/bytegarden/nginx
       - ../letsencrypt:/etc/letsencrypt
       - ../ssl:/etc/ssl
       - ../logs/nginx:/var/log/nginx

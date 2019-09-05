@@ -17,4 +17,4 @@ dotnet publish $DIR/Api.csproj -c "Release" -o $DIR/obj/Docker/publish/Api
 
 echo -e "\nBuilding docker image"
 docker --version
-docker build -t bitwardence/api $DIR/.
+docker build -t bytegarden/api $DIR/.

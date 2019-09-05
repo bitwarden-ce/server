@@ -4,7 +4,7 @@
     <Version>1.32.0</Version>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>Bit.Events</RootNamespace>
-    <UserSecretsId>bitwarden-Events</UserSecretsId>
+    <UserSecretsId>bytegarden-Events</UserSecretsId>
     <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
