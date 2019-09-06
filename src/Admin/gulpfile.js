@@ -42,6 +42,10 @@ const build_lib = gulp.series(clean_lib, () => {
             dest: paths.libDir + 'fontawesome/css'
         },
         {
+            src: paths.npmDir + '@fortawesome/fontawesome-free/webfonts/*',
+            dest: paths.libDir + 'fontawesome/css'
+        },
+        {
             src: paths.npmDir + 'font-awesome/fonts/*',
             dest: paths.libDir + 'font-awesome/fonts'
         },
