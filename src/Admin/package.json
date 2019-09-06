@@ -6,20 +6,20 @@
     "build": "gulp build"
   },
   "devDependencies": {
-    "gulp-cli": "^2.2",
-    "gulp": "^4.0",
-    "rimraf": "^3.0",
-    "merge-stream": "^2.0",
-    "run-sequence": "^2.2",
-    "gulp-concat": "^2.6",
+    "gulp-cli": "^2",
+    "gulp": "^4",
+    "rimraf": "^3",
+    "merge-stream": "^2",
+    "run-sequence": "^2",
+    "gulp-concat": "^2",
     "gulp-cssmin": "^0.2",
-    "gulp-uglify": "^3.0",
-    "gulp-sass": "^4.0",
-    "gulp-google-webfonts": "^2.1",
-    "bootstrap": "^4.3",
-    "@fortawesome/fontawesome-free": "^5.10",
-    "popper.js": "^1.15",
-    "jquery": "^3.4",
-    "graceful-fs": "^4.2"
+    "gulp-uglify": "^3",
+    "gulp-sass": "^4",
+    "gulp-google-webfonts": "^2",
+    "bootstrap": "^4",
+    "@fortawesome/fontawesome-free": "^5",
+    "popper.js": "^1",
+    "jquery": "^3",
+    "graceful-fs": "^4"
   }
 }
