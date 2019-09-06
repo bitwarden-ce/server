@@ -61,10 +61,7 @@ namespace Bit.Events
             }
 
             // Mvc
-            services.AddMvc(config =>
-            {
-                config.Filters.Add(new LoggingExceptionHandlerFilterAttribute());
-            });
+            services.AddMvc();
 
             if(usingServiceBusAppCache)
             {
