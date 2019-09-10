@@ -51,9 +51,14 @@ mkdir -p /var/opt/mssql/data
 chown -R $USERNAME:$GROUPNAME /var/opt/mssql
 chown $USERNAME:$GROUPNAME /backup-db.sh
 chown $USERNAME:$GROUPNAME /backup-db.sql
+chown $USERNAME:$GROUPNAME /restore-db.sh
 
 # Sounds like gosu keeps env when switching, but of course cron does not
 env > /etc/environment
 cron
+
+if [[ $1 == "restore" ]]; then
+    exec gosu $USERNAME:$GROUPNAME /restore-db.sh "$2"
+fi
 
 exec gosu $USERNAME:$GROUPNAME /opt/mssql/bin/sqlservr

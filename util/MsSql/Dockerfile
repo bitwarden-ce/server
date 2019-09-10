@@ -12,10 +12,12 @@ COPY crontab /etc/cron.d/bytegarden-cron
 RUN chmod 0644 /etc/cron.d/bytegarden-cron
 COPY backup-db.sql /
 COPY backup-db.sh /
+COPY restore-db.sh /
 COPY entrypoint.sh /
 
 RUN chmod +x /entrypoint.sh \
-    && chmod +x /backup-db.sh
+    && chmod +x /backup-db.sh \
+    && chmod +x /restore-db.sh
 
 RUN /opt/mssql/bin/mssql-conf set telemetry.customerfeedback false
 # As the setting above does not work, let's use the workaround below

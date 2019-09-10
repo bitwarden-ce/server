@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$(dirname "${BASH_SOURCE[0]}")"
+cd ${DIR}
 
 echo -e "\n## Building MsSql"
 
 echo -e "\nBuilding docker image"
 docker --version
-docker build -t bytegarden/mssql $DIR/.
+docker build -t bytegarden/mssql .
