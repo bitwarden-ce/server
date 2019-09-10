@@ -2,7 +2,6 @@
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Bit.Core.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -28,7 +27,6 @@ namespace Bit.Notifications
         }
 
         [HttpPost("~/send")]
-        [SelfHosted(SelfHostedOnly = true)]
         public async Task PostSend()
         {
             using(var reader = new StreamReader(Request.Body, Encoding.UTF8))
